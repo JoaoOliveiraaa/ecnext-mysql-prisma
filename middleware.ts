@@ -8,6 +8,7 @@ export async function middleware(request: NextRequest) {
   // Adicionar o URL atual aos headers para uso nas páginas
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set("x-url", request.url)
+  requestHeaders.set("x-pathname", pathname)
 
   // Verificar se é uma rota administrativa (exceto a página de login)
   if (pathname.startsWith("/admin") && !pathname.includes("/admin/login")) {

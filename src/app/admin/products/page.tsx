@@ -1,21 +1,53 @@
+// Atualizar a página de produtos para buscar dados reais
+
 import Link from "next/link"
 import Image from "next/image"
-import { getAdminProducts } from "@/lib/admin-data"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { formatCurrency } from "@/lib/utils"
 import { Plus } from "lucide-react"
 import AdminPagination from "@/components/admin/admin-pagination"
 import AdminProductActions from "@/components/admin/admin-product-actions"
+import { db } from "@/lib/db"
+import { formatCurrency } from "@/lib/utils"
+
+export const dynamic = "force-dynamic"
 
 export default async function AdminProductsPage({
   searchParams,
 }: {
   searchParams: { page?: string }
 }) {
-  const page = searchParams.page ? Number.parseInt(searchParams.page) : 1
-  const { products, total, totalPages } = await getAdminProducts(page)
+  const page = searchParams?.page ? Number.parseInt(searchParams.page) : 1
+  const limit = 10
+  const skip = (page - 1) * limit
+
+  // Buscar produtos do banco de dados
+  let products = []
+  let totalProducts = 0
+
+  try {
+    products = await db.product.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        category: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    })
+
+    totalProducts = await db.product.count()
+  } catch (error) {
+    console.error("Erro ao buscar produtos:", error)
+  }
+
+  const totalPages = Math.ceil(totalProducts / limit) || 1
 
   return (
     <div className="space-y-6">
@@ -43,7 +75,7 @@ export default async function AdminProductsPage({
           </TableHeader>
           <TableBody>
             {products.length > 0 ? (
-              products.map((product) => (
+              products.map((product: any) => (
                 <TableRow key={product.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -61,7 +93,7 @@ export default async function AdminProductsPage({
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{product.category}</TableCell>
+                  <TableCell>{product.category?.name || "Sem categoria"}</TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       {product.discountPercentage > 0 ? (

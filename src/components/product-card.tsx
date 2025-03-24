@@ -55,13 +55,15 @@ export default function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <Link href={`/product/${product.slug}`} className="group">
+    <Link href={`/product/${product.slug}`} className="group block">
       <div className="relative aspect-square overflow-hidden rounded-md">
         <Image
-          src={product.imageUrl || "/placeholder.svg"}
+          src={product.imageUrl || "/placeholder.svg?height=300&width=300"}
           alt={product.name}
           fill
           className="object-cover transition-transform group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          priority={true}
         />
         {product.discountPercentage > 0 && (
           <Badge className="absolute top-2 left-2 bg-black text-white">{product.discountPercentage}% OFF</Badge>

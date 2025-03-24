@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import AdminLoginForm from "@/components/admin/admin-login-form"
 import { redirect } from "next/navigation"
 
+// Atualizar a página de login para não usar o layout principal
 export const metadata: Metadata = {
   title: "Admin Login | MINISHOP",
   description: "Acesso ao painel administrativo da loja MINISHOP",
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 export default async function AdminLoginPage() {
   const session = await getServerSession(authOptions)
 
+  // Se já estiver autenticado como admin, redirecionar para o dashboard
   if (session && session.user?.email === "admin@jondev.com") {
     redirect("/admin")
   }

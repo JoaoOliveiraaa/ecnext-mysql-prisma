@@ -23,9 +23,9 @@ interface RecentOrdersTableProps {
 export default function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
   const [page, setPage] = useState(1)
   const itemsPerPage = 5
-  const totalPages = Math.ceil(orders.length / itemsPerPage)
+  const totalPages = Math.ceil((orders?.length || 0) / itemsPerPage)
 
-  const paginatedOrders = orders.slice((page - 1) * itemsPerPage, page * itemsPerPage)
+  const paginatedOrders = orders?.slice((page - 1) * itemsPerPage, page * itemsPerPage) || []
 
   const getStatusColor = (status: Order["status"]) => {
     switch (status) {
@@ -109,7 +109,7 @@ export default function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
         </Table>
       </div>
 
-      {orders.length > itemsPerPage && (
+      {(orders?.length || 0) > itemsPerPage && (
         <div className="flex items-center justify-end space-x-2 py-4">
           <Button
             variant="outline"

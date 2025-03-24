@@ -5,14 +5,50 @@ import { getRecentOrders, getTopProducts, getDashboardStats } from "@/lib/admin-
 import DashboardChart from "@/components/admin/dashboard-chart"
 import RecentOrdersTable from "@/components/admin/recent-orders-table"
 import TopProductsTable from "@/components/admin/top-products-table"
+import MigrationGuide from "@/components/migration-guide"
+import SetupGuide from "@/components/setup-guide"
 
 export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats()
-  const recentOrders = await getRecentOrders()
-  const topProducts = await getTopProducts()
+  // Adicionando tratamento de erro para as funções
+  let stats = {
+    totalSales: 0,
+    salesGrowth: 0,
+    totalOrders: 0,
+    ordersGrowth: 0,
+    totalProducts: 0,
+    activeProducts: 0,
+    totalUsers: 0,
+    usersGrowth: 0,
+  }
+
+  let recentOrders = []
+  let topProducts = []
+
+  try {
+    stats = await getDashboardStats()
+  } catch (error) {
+    console.error("Erro ao carregar estatísticas:", error)
+  }
+
+  try {
+    recentOrders = await getRecentOrders()
+  } catch (error) {
+    console.error("Erro ao carregar pedidos recentes:", error)
+  }
+
+  try {
+    topProducts = await getTopProducts()
+  } catch (error) {
+    console.error("Erro ao carregar produtos populares:", error)
+  }
 
   return (
     <div className="space-y-6">
+      <div className="space-y-4">
+        <MigrationGuide />
+        <SetupGuide />
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="p-6">
@@ -82,7 +118,7 @@ export default async function AdminDashboardPage() {
               </div>
             </div>
             <div className="mt-4 flex items-center text-sm">
-              <span className="text-muted-foreground">{stats.activeProducts} ativos</span>
+              <span className="text-muted-foreground">{stats.activeProducts} produtos disponíveis</span>
             </div>
           </CardContent>
         </Card>

@@ -32,11 +32,14 @@ export default function AdminProductActions({ productId }: AdminProductActionsPr
     setIsDeleting(true)
 
     try {
-      // Aqui você implementaria a chamada à API para excluir o produto
-      // const response = await fetch(`/api/admin/products/${productId}`, { method: 'DELETE' })
+      const response = await fetch(`/api/admin/products/${productId}`, {
+        method: "DELETE",
+      })
 
-      // Simulando uma exclusão bem-sucedida
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Erro ao excluir produto")
+      }
 
       toast({
         title: "Produto excluído",
@@ -47,9 +50,10 @@ export default function AdminProductActions({ productId }: AdminProductActionsPr
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Ocorreu um erro ao excluir o produto.",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao excluir o produto.",
         variant: "destructive",
       })
+      console.error(error)
     } finally {
       setIsDeleting(false)
       setIsDeleteDialogOpen(false)

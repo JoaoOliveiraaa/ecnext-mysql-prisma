@@ -25,9 +25,9 @@ interface TopProductsTableProps {
 export default function TopProductsTable({ products }: TopProductsTableProps) {
   const [page, setPage] = useState(1)
   const itemsPerPage = 5
-  const totalPages = Math.ceil(products.length / itemsPerPage)
+  const totalPages = Math.ceil((products?.length || 0) / itemsPerPage)
 
-  const paginatedProducts = products.slice((page - 1) * itemsPerPage, page * itemsPerPage)
+  const paginatedProducts = products?.slice((page - 1) * itemsPerPage, page * itemsPerPage) || []
 
   return (
     <div>
@@ -85,7 +85,7 @@ export default function TopProductsTable({ products }: TopProductsTableProps) {
         </Table>
       </div>
 
-      {products.length > itemsPerPage && (
+      {(products?.length || 0) > itemsPerPage && (
         <div className="flex items-center justify-end space-x-2 py-4">
           <Button
             variant="outline"

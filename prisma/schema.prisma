@@ -9,52 +9,79 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
+  name      String   @db.VarChar(101)
+  email     String   @unique @db.VarChar(101)
+  password  String   @db.VarChar(101)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  orders    Order[]
 }
 
 model Product {
-  id                String   @id @default(cuid())
-  name              String
-  slug              String   @unique
-  description       String   @db.Text
+  id                String      @id @default(cuid())
+  name              String      @db.VarChar(101)
+  slug              String      @unique @db.VarChar(101)
+  description       String      @db.Text
   price             Float
-  discountPercentage Float    @default(0)
-  imageUrl          String
+  discountPercentage Float      @default(0)
+  imageUrl          String      @db.VarChar(101)
   categoryId        String
-  isNew             Boolean  @default(false)
-  isFeatured        Boolean  @default(false)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  category          Category @relation(fields: [categoryId], references: [id])
+  isNew             Boolean     @default(false)
+  isFeatured        Boolean     @default(false)
+  stock             Int         @default(0)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  category          Category    @relation(fields: [categoryId], references: [id])
+  variations        ProductVariation[]
+}
+
+model ProductVariation {
+  id        String   @id @default(cuid())
+  productId String
+  type      String   @db.VarChar(101)  // cor, tamanho, etc.
+  value     String   @db.VarChar(101)  // vermelho, P, etc.
+  price     Float    // preço específico para esta variação
+  stock     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Category {
   id        String    @id @default(cuid())
-  name      String
-  slug      String    @unique
-  imageUrl  String
+  name      String    @db.VarChar(101)
+  slug      String    @unique @db.VarChar(101)
+  imageUrl  String    @db.VarChar(101)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  
+
   products  Product[]
 }
 
 model Banner {
   id                 String   @id @default(cuid())
-  title              String
-  description        String
-  imageUrl           String
-  primaryButtonText  String
-  primaryButtonLink  String
-  secondaryButtonText String
-  secondaryButtonLink String
+  title              String   @db.VarChar(101)
+  description        String   @db.VarChar(101)
+  imageUrl           String   @db.VarChar(101)
+  primaryButtonText  String   @db.VarChar(101)
+  primaryButtonLink  String   @db.VarChar(101)
+  secondaryButtonText String  @db.VarChar(101)
+  secondaryButtonLink String  @db.VarChar(101)
   isActive           Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
 
+model Order {
+  id        String   @id @default(cuid())
+  userId    String
+  status    String   @default("pending") @db.VarChar(101)
+  total     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+}

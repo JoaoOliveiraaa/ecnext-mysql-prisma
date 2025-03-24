@@ -6,11 +6,17 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import AdminSidebar from "@/components/admin/admin-sidebar"
 import AdminHeader from "@/components/admin/admin-header"
 import { headers } from "next/headers"
+import { Inter } from "next/font/google"
+import "../globals.css"
+
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Admin | MINISHOP",
   description: "Painel administrativo da loja MINISHOP",
 }
+
+export const dynamic = "force-dynamic"
 
 export default async function AdminLayout({
   children,
@@ -20,11 +26,20 @@ export default async function AdminLayout({
   const session = await getServerSession(authOptions)
 
   if (!session || session.user?.email !== "admin@jondev.com") {
-    
-    const url = new URL(headers().get("x-url") || "/admin")
-    if (!url.pathname.includes("/admin/login")) {
+
+    const headersList = headers()
+    const pathname = headersList.get("x-pathname") || "/admin"
+
+    if (!pathname.includes("/admin/login")) {
       redirect("/admin/login")
     }
+  }
+
+  const headersList = headers()
+  const pathname = headersList.get("x-pathname") || "/admin"
+
+  if (pathname.includes("/admin/login")) {
+    return children
   }
 
   return (
