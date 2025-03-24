@@ -31,7 +31,8 @@ export default function WishlistProvider({ children }: { children: React.ReactNo
   const [items, setItems] = useState<Product[]>([])
   const [isOpen, setIsOpen] = useState(false)
 
-  // Carregar wishlist do localStorage quando o componente montar
+  // Modificar o useEffect para carregar a wishlist apenas uma vez na montagem
+  // e salvar no localStorage sempre que a wishlist mudar
   useEffect(() => {
     const savedWishlist = localStorage.getItem("wishlist")
     if (savedWishlist) {
@@ -43,10 +44,11 @@ export default function WishlistProvider({ children }: { children: React.ReactNo
     }
   }, [])
 
-  // Salvar wishlist no localStorage quando mudar
   useEffect(() => {
     if (items.length > 0) {
       localStorage.setItem("wishlist", JSON.stringify(items))
+    } else {
+      localStorage.removeItem("wishlist")
     }
   }, [items])
 

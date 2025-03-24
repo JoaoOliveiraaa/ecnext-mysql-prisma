@@ -26,6 +26,7 @@ interface Variation {
   value: string
   price: number
   stock: number
+  colorCode?: string
 }
 
 export default function ProductForm() {
@@ -53,6 +54,7 @@ export default function ProductForm() {
     value: "",
     price: 0,
     stock: 0,
+    colorCode: "",
   })
 
   useEffect(() => {
@@ -137,6 +139,7 @@ export default function ProductForm() {
     }))
   }
 
+  // Modificar a função addVariation para tratar cores corretamente
   const addVariation = () => {
     if (!newVariation.type || !newVariation.value) {
       toast({
@@ -147,12 +150,24 @@ export default function ProductForm() {
       return
     }
 
-    setVariations((prev) => [...prev, { ...newVariation }])
+    // Para variações de cor, adicionar o código hexadecimal ao valor
+    const variationToAdd = { ...newVariation }
+
+    if (variationToAdd.type === "cor" && variationToAdd.colorCode) {
+      // Formatar o valor como "Nome da cor #HEXCODE"
+      variationToAdd.value = `${variationToAdd.value} (${variationToAdd.colorCode})`
+
+      // Para cores, definir o preço como 0
+      variationToAdd.price = 0
+    }
+
+    setVariations((prev) => [...prev, variationToAdd])
     setNewVariation({
       type: "",
       value: "",
       price: 0,
       stock: 0,
+      colorCode: "",
     })
   }
 
@@ -377,14 +392,48 @@ export default function ProductForm() {
 
                 <div className="space-y-2">
                   <Label htmlFor="value">Valor</Label>
-                  <Input
-                    id="value"
-                    name="value"
-                    value={newVariation.value}
-                    onChange={handleVariationChange}
-                    disabled={isLoading}
-                    placeholder="Ex: Vermelho, P, Algodão"
-                  />
+                  {newVariation.type === "cor" ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <Input
+                          id="value"
+                          name="value"
+                          value={newVariation.value}
+                          onChange={handleVariationChange}
+                          disabled={isLoading}
+                          placeholder="Nome da cor (ex: Vermelho)"
+                          className="flex-1"
+                        />
+                        <div className="relative w-12">
+                          <Input
+                            id="colorCode"
+                            name="colorCode"
+                            type="color"
+                            value={newVariation.colorCode || "#000000"}
+                            onChange={(e) => {
+                              const colorCode = e.target.value
+                              setNewVariation((prev) => ({
+                                ...prev,
+                                colorCode,
+                              }))
+                            }}
+                            className="w-full h-10 p-1 cursor-pointer"
+                            disabled={isLoading}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Código: {newVariation.colorCode || "#000000"}</p>
+                    </div>
+                  ) : (
+                    <Input
+                      id="value"
+                      name="value"
+                      value={newVariation.value}
+                      onChange={handleVariationChange}
+                      disabled={isLoading}
+                      placeholder="Ex: P, Algodão, etc."
+                    />
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -397,7 +446,7 @@ export default function ProductForm() {
                     min="0"
                     value={newVariation.price}
                     onChange={handleVariationChange}
-                    disabled={isLoading}
+                    disabled={isLoading || newVariation.type === "cor"}
                     placeholder="Preço específico"
                   />
                 </div>

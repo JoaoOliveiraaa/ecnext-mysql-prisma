@@ -12,7 +12,9 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    const { id } = params
+    // Aguardar os parâmetros antes de acessar suas propriedades
+    const resolvedParams = await Promise.resolve(params)
+    const id = resolvedParams.id
 
     // Verificar se o produto existe
     const product = await db.product.findUnique({
@@ -44,7 +46,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    const { id } = params
+    // Aguardar os parâmetros antes de acessar suas propriedades
+    const resolvedParams = await Promise.resolve(params)
+    const id = resolvedParams.id
 
     // Buscar o produto
     const product = await db.product.findUnique({
@@ -75,7 +79,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    const { id } = params
+    // Aguardar os parâmetros antes de acessar suas propriedades
+    const resolvedParams = await Promise.resolve(params)
+    const id = resolvedParams.id
+
     const body = await req.json()
     const {
       name,

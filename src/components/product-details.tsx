@@ -106,7 +106,20 @@ export default function ProductDetails({ product, relatedProducts }: ProductDeta
     }))
   }
 
+  // Modificar a função handleAddToCart para incluir as variações selecionadas
   const handleAddToCart = () => {
+    // Verificar se todas as variações necessárias foram selecionadas
+    const allVariationsSelected = Object.keys(variationsByType).every((type) => selectedVariations[type])
+
+    if (Object.keys(variationsByType).length > 0 && !allVariationsSelected) {
+      toast({
+        title: "Selecione todas as opções",
+        description: "Por favor, selecione todas as opções disponíveis antes de adicionar ao carrinho.",
+        variant: "destructive",
+      })
+      return
+    }
+
     // Criar um objeto de produto com as variações selecionadas
     const productToAdd = {
       ...product,
@@ -262,15 +275,55 @@ export default function ProductDetails({ product, relatedProducts }: ProductDeta
                     onValueChange={(value) => handleVariationChange(type, value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={`Selecione ${type}`} />
+                      <SelectValue placeholder={`Selecione ${type}`}>
+                        {selectedVariations[type] && (
+                          <div className="flex items-center">
+                            {type.toLowerCase() === "cor" && (
+                              <span
+                                className="inline-block mr-2 w-4 h-4 rounded-full border"
+                                style={{
+                                  backgroundColor: selectedVariations[type].includes("#")
+                                    ? selectedVariations[type].split(" ").find((part) => part.startsWith("#"))
+                                    : undefined,
+                                }}
+                              />
+                            )}
+                            {type.toLowerCase() === "cor" && selectedVariations[type].includes("#")
+                              ? selectedVariations[type].split(" ")[0] // Mostrar apenas o nome da cor, não o código hex
+                              : selectedVariations[type]}
+                          </div>
+                        )}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {variations.map((variation, idx) => (
-                        <SelectItem key={variation.id || idx} value={variation.value}>
-                          {variation.value}{" "}
-                          {variation.price !== product.price ? `(${formatCurrency(variation.price)})` : ""}
-                        </SelectItem>
-                      ))}
+                      {variations.map((variation, idx) => {
+                        // Extrair nome da cor e código hex para variações de cor
+                        let colorName = variation.value
+                        let colorCode = ""
+
+                        if (type.toLowerCase() === "cor" && variation.value.includes("#")) {
+                          const parts = variation.value.split(" ")
+                          colorName = parts[0]
+                          colorCode = parts.find((part) => part.startsWith("#")) || ""
+                        }
+
+                        return (
+                          <SelectItem key={variation.id || idx} value={variation.value}>
+                            <div className="flex items-center">
+                              {type.toLowerCase() === "cor" && (
+                                <span
+                                  className="inline-block mr-2 w-4 h-4 rounded-full border"
+                                  style={{ backgroundColor: colorCode || undefined }}
+                                />
+                              )}
+                              <span>{type.toLowerCase() === "cor" ? colorName : variation.value}</span>
+                              {type.toLowerCase() !== "cor" && variation.price !== product.price && (
+                                <span className="ml-2">{`(${formatCurrency(variation.price)})`}</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        )
+                      })}
                     </SelectContent>
                   </Select>
                 </div>

@@ -37,7 +37,8 @@ export default function CartProvider({ children }: { children: React.ReactNode }
   const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
 
-  // Carregar carrinho do localStorage quando o componente montar
+  // Modificar o useEffect para carregar o carrinho apenas uma vez na montagem
+  // e salvar no localStorage sempre que o carrinho mudar
   useEffect(() => {
     const savedCart = localStorage.getItem("cart")
     if (savedCart) {
@@ -49,10 +50,11 @@ export default function CartProvider({ children }: { children: React.ReactNode }
     }
   }, [])
 
-  // Salvar carrinho no localStorage quando mudar
   useEffect(() => {
     if (items.length > 0) {
       localStorage.setItem("cart", JSON.stringify(items))
+    } else {
+      localStorage.removeItem("cart")
     }
   }, [items])
 

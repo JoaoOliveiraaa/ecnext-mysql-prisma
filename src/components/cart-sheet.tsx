@@ -7,6 +7,7 @@ import { useCart } from "@/components/cart-provider"
 import Image from "next/image"
 import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
+import { TableCell } from "@/components/ui/table"
 
 export default function CartSheet() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice } = useCart()
@@ -50,19 +51,44 @@ export default function CartSheet() {
                             className="object-cover"
                           />
                         </div>
-                        <div className="flex-1 space-y-1">
-                          <h3 className="font-medium">
-                            <Link
-                              href={`/product/${item.product.slug}`}
-                              onClick={closeCart}
-                              className="hover:underline"
-                            >
-                              {item.product.name}
-                            </Link>
-                          </h3>
-                          <div className="text-sm text-muted-foreground">
-                            {formatCurrency(price)} x {item.quantity} = {formatCurrency(price * item.quantity)}
+                        <TableCell>
+                          <div className="flex-1 space-y-1">
+                            <h3 className="font-medium">
+                              <Link
+                                href={`/product/${item.product.slug}`}
+                                onClick={closeCart}
+                                className="hover:underline"
+                              >
+                                {item.product.name}
+                              </Link>
+                            </h3>
+                            <div className="text-sm text-muted-foreground">
+                              {formatCurrency(price)} x {item.quantity} = {formatCurrency(price * item.quantity)}
+                            </div>
+                            {item.product.selectedVariations &&
+                              Object.keys(item.product.selectedVariations).length > 0 && (
+                                <div className="text-xs text-muted-foreground">
+                                  {Object.entries(item.product.selectedVariations).map(([type, value]) => (
+                                    <div key={type}>
+                                      <span className="capitalize">{type}: </span>
+                                      <span className="font-medium">{value}</span>
+                                      {type.toLowerCase() === "cor" && (
+                                        <span
+                                          className="inline-block ml-1 w-3 h-3 rounded-full border"
+                                          style={{
+                                            backgroundColor: value.toString().startsWith("#")
+                                              ? value.toString()
+                                              : undefined,
+                                          }}
+                                        />
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                           </div>
+                        </TableCell>
+                        <div className="flex-1 space-y-1">
                           <div className="flex items-center space-x-2">
                             <Button
                               variant="outline"

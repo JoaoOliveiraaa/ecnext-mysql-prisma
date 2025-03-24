@@ -16,7 +16,9 @@ export default async function EditProductPage({
 }: {
   params: { id: string }
 }) {
-  const { id } = params
+  // Aguardar os parâmetros antes de acessar suas propriedades
+  const resolvedParams = await Promise.resolve(params)
+  const id = resolvedParams.id
 
   // Buscar o produto pelo ID
   let product = null
