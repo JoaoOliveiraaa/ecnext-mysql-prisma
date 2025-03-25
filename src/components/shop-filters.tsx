@@ -1,174 +1,92 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import React from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
-import { Search, X } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 
 interface Category {
   id: string
   name: string
   slug: string
-  _count: {
-    products: number
-  }
 }
 
 interface ShopFiltersProps {
   categories: Category[]
-  selectedCategory?: string
-  minPrice?: string
-  maxPrice?: string
-  searchQuery?: string
-  sortOption?: string
 }
 
-export default function ShopFilters({
-  categories,
-  selectedCategory,
-  minPrice,
-  maxPrice,
-  searchQuery,
-  sortOption,
-}: ShopFiltersProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+export default function ShopFilters({ categories }: ShopFiltersProps) {
+  const [priceRange, setPriceRange] = React.useState([0, 1000])
+  const [selectedCategories, setSelectedCategories] = React.useState<string[]>([])
 
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000])
-  const [search, setSearch] = useState(searchQuery || "")
-
-  // Inicializar o range de preço com os valores da URL
-  useEffect(() => {
-    const min = minPrice ? Number.parseFloat(minPrice) : 0
-    const max = maxPrice ? Number.parseFloat(maxPrice) : 1000
-    setPriceRange([min, max])
-  }, [minPrice, maxPrice])
-
-  const createQueryString = (params: Record<string, string | null>) => {
-    const newParams = new URLSearchParams(searchParams.toString())
-
-    // Atualizar ou remover parâmetros
-    Object.entries(params).forEach(([name, value]) => {
-      if (value === null) {
-        newParams.delete(name)
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategories((prev) => {
+      if (prev.includes(categoryId)) {
+        return prev.filter((id) => id !== categoryId)
       } else {
-        newParams.set(name, value)
+        return [...prev, categoryId]
       }
     })
-
-    // Sempre voltar para a primeira página ao filtrar
-    if (Object.keys(params).some((key) => key !== "page")) {
-      newParams.delete("page")
-    }
-
-    return newParams.toString()
   }
 
-  const handleCategoryClick = (slug: string) => {
-    const isSelected = selectedCategory === slug
-    router.push(`/shop?${createQueryString({ category: isSelected ? null : slug })}`)
-  }
-
-  const handlePriceChange = (values: number[]) => {
-    setPriceRange([values[0], values[1]])
-  }
-
-  const applyPriceFilter = () => {
-    router.push(`/shop?${createQueryString({ min: priceRange[0].toString(), max: priceRange[1].toString() })}`)
-  }
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    router.push(`/shop?${createQueryString({ q: search })}`)
-  }
-
-  const clearAllFilters = () => {
-    router.push("/shop")
-    setSearch("")
+  const handleReset = () => {
     setPriceRange([0, 1000])
+    setSelectedCategories([])
   }
-
-  // Verificar se há filtros ativos
-  const hasActiveFilters = selectedCategory || minPrice || maxPrice || searchQuery
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium mb-3">Buscar</h3>
-        <form onSubmit={handleSearch} className="flex items-center space-x-2">
-          <Input
-            type="search"
-            placeholder="Buscar produtos..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <Button type="submit" size="icon">
-            <Search className="h-4 w-4" />
-            <span className="sr-only">Buscar</span>
-          </Button>
-        </form>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-medium mb-3">Categorias</h3>
-        <div className="space-y-2">
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              variant={selectedCategory === category.slug ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => handleCategoryClick(category.slug)}
-            >
-              {category.name}
-              <span className="ml-auto text-muted-foreground text-sm">({category._count.products})</span>
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-medium mb-3">Preço</h3>
-        <div className="space-y-4">
+    <Card>
+      <CardHeader className="px-4 py-3">
+        <CardTitle className="text-lg">Filtros</CardTitle>
+      </CardHeader>
+      <CardContent className="px-4 py-3 space-y-6">
+        <div className="space-y-3">
+          <h3 className="font-medium text-sm">Preço</h3>
           <Slider
             defaultValue={[0, 1000]}
-            value={priceRange}
-            min={0}
             max={1000}
             step={10}
-            onValueChange={handlePriceChange}
+            value={priceRange}
+            onValueChange={setPriceRange}
           />
-
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="min-price">Min</Label>
-              <div className="mt-1">R$ {priceRange[0]}</div>
-            </div>
-            <div>
-              <Label htmlFor="max-price">Max</Label>
-              <div className="mt-1">R$ {priceRange[1]}</div>
-            </div>
+          <div className="flex items-center justify-between text-sm">
+            <span>R$ {priceRange[0]}</span>
+            <span>R$ {priceRange[1]}</span>
           </div>
-
-          <Button onClick={applyPriceFilter} className="w-full">
-            Aplicar
-          </Button>
         </div>
-      </div>
 
-      {hasActiveFilters && (
-        <div>
-          <Button variant="outline" onClick={clearAllFilters} className="w-full">
-            <X className="mr-2 h-4 w-4" />
-            Limpar filtros
-          </Button>
+        <Separator />
+
+        <div className="space-y-3">
+          <h3 className="font-medium text-sm">Categorias</h3>
+          <div className="space-y-2">
+            {categories.map((category) => (
+              <div key={category.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`category-${category.id}`}
+                  checked={selectedCategories.includes(category.id)}
+                  onCheckedChange={() => handleCategoryChange(category.id)}
+                />
+                <Label htmlFor={`category-${category.id}`} className="text-sm cursor-pointer">
+                  {category.name}
+                </Label>
+              </div>
+            ))}
+          </div>
         </div>
-      )}
-    </div>
+
+        <Button
+          variant="outline"
+          className="w-full mt-4"
+          onClick={handleReset}
+        >
+          Limpar filtros
+        </Button>
+      </CardContent>
+    </Card>
   )
 }
 

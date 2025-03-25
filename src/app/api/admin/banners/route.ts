@@ -7,9 +7,16 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
 
-    // Verificar se o usuário está autenticado e é um administrador
-    if (!session || session.user?.email !== "admin@jondev.com") {
+    // Verificar se o usuário está autenticado e é um administrador de loja
+    if (!session || !session.user || (session.user.role !== "storeAdmin" && session.user.role !== "superadmin")) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    }
+
+    // Obter o storeId do usuário autenticado (exceto para superadmin)
+    const storeId = session.user.role === "superadmin" ? null : session.user.storeId
+
+    if (session.user.role === "storeAdmin" && !storeId) {
+      return NextResponse.json({ error: "Loja não encontrada" }, { status: 400 })
     }
 
     const body = await req.json()
@@ -25,7 +32,15 @@ export async function POST(req: Request) {
     } = body
 
     // Validar dados
-    if (!title || !description || !imageUrl || !primaryButtonText || !primaryButtonLink) {
+    if (
+      !title ||
+      !description ||
+      !imageUrl ||
+      !primaryButtonText ||
+      !primaryButtonLink ||
+      !secondaryButtonText ||
+      !secondaryButtonLink
+    ) {
       return NextResponse.json({ error: "Dados incompletos" }, { status: 400 })
     }
 
@@ -37,9 +52,10 @@ export async function POST(req: Request) {
         imageUrl,
         primaryButtonText,
         primaryButtonLink,
-        secondaryButtonText: secondaryButtonText || "",
-        secondaryButtonLink: secondaryButtonLink || "",
-        isActive: isActive !== undefined ? isActive : true,
+        secondaryButtonText,
+        secondaryButtonLink,
+        isActive: isActive || true,
+        storeId: storeId || "superadmin-store", // Para o superadmin, usar um ID padrão
       },
     })
 
@@ -60,17 +76,26 @@ export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions)
 
-    // Verificar se o usuário está autenticado e é um administrador
-    if (!session || session.user?.email !== "admin@jondev.com") {
+    // Verificar se o usuário está autenticado e é um administrador de loja
+    if (!session || !session.user || (session.user.role !== "storeAdmin" && session.user.role !== "superadmin")) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
+    
+    // Obter o storeId do usuário autenticado (exceto para superadmin)
+    const storeId = session.user.role === "superadmin" ? null : session.user.storeId
+    
+    // Filtro adicional para storeId (se não for superadmin)
+    const storeFilter = storeId ? { storeId } : {}
 
-    // Buscar todos os banners
+    // Buscar banners
     const banners = await db.banner.findMany({
+      where: storeFilter,
       orderBy: { createdAt: "desc" },
     })
 
-    return NextResponse.json({ banners })
+    return NextResponse.json({
+      banners,
+    })
   } catch (error) {
     console.error("ERRO_LISTAR_BANNERS", error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })

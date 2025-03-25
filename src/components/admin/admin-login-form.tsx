@@ -35,28 +35,24 @@ export default function AdminLoginForm() {
     setIsLoading(true)
 
     try {
+      console.log("Tentando autenticar como storeAdmin:", formData.email)
+      
       const result = await signIn("credentials", {
         email: formData.email,
         password: formData.password,
+        userType: "storeAdmin",
         redirect: false,
       })
 
+      console.log("Resultado da autenticação:", result)
+
       if (result?.error) {
-        setError("Credenciais inválidas")
+        setError("Credenciais inválidas: " + result.error)
         setIsLoading(false)
         return
       }
 
-      if (formData.email !== "admin@jondev.com") {
-        setError("Você não tem permissão para acessar o painel administrativo")
-        await signIn("credentials", {
-          email: "",
-          password: "",
-          redirect: false,
-        })
-        setIsLoading(false)
-        return
-      }
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
       toast({
         title: "Login realizado com sucesso",
@@ -66,6 +62,7 @@ export default function AdminLoginForm() {
       router.push("/admin")
       router.refresh()
     } catch (error) {
+      console.error("Erro ao fazer login:", error)
       setError("Ocorreu um erro ao fazer login")
     } finally {
       setIsLoading(false)
@@ -87,7 +84,7 @@ export default function AdminLoginForm() {
           id="email"
           name="email"
           type="email"
-          placeholder="admin@jondev.com"
+          placeholder="seu@email.com"
           value={formData.email}
           onChange={handleChange}
           disabled={isLoading}

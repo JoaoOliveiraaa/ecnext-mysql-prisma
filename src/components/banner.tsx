@@ -1,13 +1,18 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import type { Banner as BannerType } from "@/types"
+import { useState } from "react"
 
 interface BannerProps {
   data: BannerType
 }
 
 export default function Banner({ data }: BannerProps) {
+  const [imageError, setImageError] = useState(false)
+
   // Se data for null ou undefined, use um banner padrão
   const bannerData = data || {
     title: "Spring Collection",
@@ -18,6 +23,10 @@ export default function Banner({ data }: BannerProps) {
     secondaryButtonText: "Learn More",
     secondaryButtonLink: "/about",
   }
+
+  const imageSrc = imageError
+    ? "/placeholder.svg?height=300&width=500"
+    : bannerData.imageUrl || "/placeholder.svg?height=300&width=500"
 
   return (
     <div className="w-full max-w-7xl px-4 py-6">
@@ -30,20 +39,24 @@ export default function Banner({ data }: BannerProps) {
               <Button asChild variant="default">
                 <Link href={bannerData.primaryButtonLink}>{bannerData.primaryButtonText}</Link>
               </Button>
-              <Button asChild variant="outline">
-                <Link href={bannerData.secondaryButtonLink}>{bannerData.secondaryButtonText}</Link>
-              </Button>
+              {bannerData.secondaryButtonText && bannerData.secondaryButtonLink && (
+                <Button asChild variant="outline">
+                  <Link href={bannerData.secondaryButtonLink}>{bannerData.secondaryButtonText}</Link>
+                </Button>
+              )}
             </div>
           </div>
           {bannerData.imageUrl && (
             <div className="md:w-1/2 flex justify-center">
-              <Image
-                src={bannerData.imageUrl || "/placeholder.svg"}
-                alt={bannerData.title}
-                width={500}
-                height={300}
-                className="object-cover"
-              />
+              <div className="relative h-[300px] w-full max-w-[500px]">
+                <Image
+                  src={imageSrc || "/placeholder.svg"}
+                  alt={bannerData.title}
+                  fill
+                  className="object-cover"
+                  onError={() => setImageError(true)}
+                />
+              </div>
             </div>
           )}
         </div>

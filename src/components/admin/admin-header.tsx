@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
-import { Menu, Bell, User, LogOut, Settings } from "lucide-react"
+import { Menu, Bell, User, LogOut, Settings, Store } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -21,6 +21,28 @@ export default function AdminHeader() {
   const { data: session } = useSession()
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [storeSlug, setStoreSlug] = useState<string | null>(null)
+
+  // Obter o slug da loja do administrador atual
+  useEffect(() => {
+    const fetchStoreInfo = async () => {
+      if (session?.user?.storeId) {
+        try {
+          // Fazer uma requisição para obter informações da loja
+          const response = await fetch(`/api/admin/store-info`)
+          const data = await response.json()
+          
+          if (data.store?.slug) {
+            setStoreSlug(data.store.slug)
+          }
+        } catch (error) {
+          console.error("Erro ao obter informações da loja:", error)
+        }
+      }
+    }
+
+    fetchStoreInfo()
+  }, [session])
 
   // Extrair o título da página atual do pathname
   const getPageTitle = () => {
@@ -49,8 +71,11 @@ export default function AdminHeader() {
   }
 
   const handleSignOut = async () => {
-    await signOut({ redirect: true, callbackUrl: "/admin/login" })
+    await signOut({ redirect: true, callbackUrl: "/admin-login" })
   }
+
+  // Determinar o link da loja
+  const storeLink = storeSlug ? `/store/${storeSlug}` : "/"
 
   return (
     <header className="bg-white border-b">
@@ -73,10 +98,10 @@ export default function AdminHeader() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/" target="_blank">
-                <span className="sr-only">Visitar loja</span>
-                <span className="hidden sm:inline-block text-sm mr-2">Visitar loja</span>
+            <Button variant="ghost" size="sm" asChild className="flex items-center">
+              <Link href={storeLink} target="_blank">
+                <Store className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline-block">Visitar loja</span>
               </Link>
             </Button>
 

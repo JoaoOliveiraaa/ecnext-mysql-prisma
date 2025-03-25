@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   description: "Painel administrativo da loja MINISHOP",
 }
 
+// Definir esse layout como layout raiz para evitar herança
 export const dynamic = "force-dynamic"
 
 export default async function AdminLayout({
@@ -24,22 +25,14 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   const session = await getServerSession(authOptions)
-
-  if (!session || session.user?.email !== "admin@jondev.com") {
-
-    const headersList = headers()
-    const pathname = headersList.get("x-pathname") || "/admin"
-
-    if (!pathname.includes("/admin/login")) {
-      redirect("/admin/login")
-    }
-  }
-
-  const headersList = headers()
-  const pathname = headersList.get("x-pathname") || "/admin"
-
-  if (pathname.includes("/admin/login")) {
-    return children
+  
+  // Para qualquer página do admin, verificar se o usuário está autenticado
+  // e é um storeAdmin ou superadmin
+  const isAdmin = session?.user?.role === "storeAdmin" || session?.user?.role === "superadmin"
+  
+  if (!session || !isAdmin) {
+    // Redirecionar para a nova página de login admin
+    redirect("/admin-login")
   }
 
   return (

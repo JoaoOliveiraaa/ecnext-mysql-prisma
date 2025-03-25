@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,11 +13,27 @@ import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 import ImageUpload from "@/components/admin/image-upload"
 
-export default function BannerForm() {
+interface Banner {
+  id?: string
+  title: string
+  description: string
+  imageUrl: string
+  primaryButtonText: string
+  primaryButtonLink: string
+  secondaryButtonText?: string
+  secondaryButtonLink?: string
+  isActive: boolean
+}
+
+interface BannerFormProps {
+  initialData?: Banner
+}
+
+export default function BannerForm({ initialData }: BannerFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Banner>({
     title: "",
     description: "",
     imageUrl: "",
@@ -27,6 +43,17 @@ export default function BannerForm() {
     secondaryButtonLink: "",
     isActive: true,
   })
+
+  // Carregar dados iniciais se estiver editando
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        ...initialData,
+        secondaryButtonText: initialData.secondaryButtonText || "",
+        secondaryButtonLink: initialData.secondaryButtonLink || "",
+      })
+    }
+  }, [initialData])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -60,9 +87,14 @@ export default function BannerForm() {
         throw new Error("Por favor, faça upload de uma imagem para o banner")
       }
 
+      // Determinar se é criação ou edição
+      const isEditing = !!initialData
+      const url = isEditing ? `/api/admin/banners/${initialData.id}` : "/api/admin/banners"
+      const method = isEditing ? "PUT" : "POST"
+
       // Enviar para a API
-      const response = await fetch("/api/admin/banners", {
-        method: "POST",
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -71,12 +103,12 @@ export default function BannerForm() {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || "Erro ao criar banner")
+        throw new Error(error.error || `Erro ao ${isEditing ? "atualizar" : "criar"} banner`)
       }
 
       toast({
-        title: "Banner criado",
-        description: "O banner foi criado com sucesso.",
+        title: isEditing ? "Banner atualizado" : "Banner criado",
+        description: isEditing ? "O banner foi atualizado com sucesso." : "O banner foi criado com sucesso.",
       })
 
       router.push("/admin/banners")
@@ -84,7 +116,7 @@ export default function BannerForm() {
     } catch (error) {
       toast({
         title: "Erro",
-        description: error instanceof Error ? error.message : "Ocorreu um erro ao criar o banner.",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao processar o banner.",
         variant: "destructive",
       })
       console.error(error)
@@ -176,7 +208,7 @@ export default function BannerForm() {
         </Button>
         <Button type="submit" disabled={isLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isLoading ? "Salvando..." : "Salvar Banner"}
+          {isLoading ? "Salvando..." : initialData ? "Atualizar Banner" : "Salvar Banner"}
         </Button>
       </div>
     </form>

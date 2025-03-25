@@ -1,0 +1,1 @@
+export { useWishlist } from "@/components/wishlist-provider" 

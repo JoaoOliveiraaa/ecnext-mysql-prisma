@@ -7,7 +7,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Modelo para usuários finais (clientes das lojas)
 model User {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(101)
+  email     String   @unique @db.VarChar(101)
+  password  String   @db.VarChar(101)
+  role      String   @default("customer") @db.VarChar(30)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders    Order[]
+}
+
+// Modelo para administradores de lojas
+model StoreAdmin {
   id        String   @id @default(cuid())
   name      String   @db.VarChar(101)
   email     String   @unique @db.VarChar(101)
@@ -15,7 +29,22 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders    Order[]
+  store     Store?   // Um admin pode gerenciar uma loja
+}
+
+// Modelo para lojas
+model Store {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(101)
+  slug        String   @unique @db.VarChar(101)
+  adminId     String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  admin       StoreAdmin  @relation(fields: [adminId], references: [id])
+  products    Product[]
+  categories  Category[]
+  banners     Banner[]
 }
 
 model Product {
@@ -27,6 +56,7 @@ model Product {
   discountPercentage Float      @default(0)
   imageUrl          String      @db.VarChar(101)
   categoryId        String
+  storeId           String     // Relacionamento com a loja
   isNew             Boolean     @default(false)
   isFeatured        Boolean     @default(false)
   stock             Int         @default(0)
@@ -34,6 +64,7 @@ model Product {
   updatedAt         DateTime    @updatedAt
 
   category          Category    @relation(fields: [categoryId], references: [id])
+  store             Store       @relation(fields: [storeId], references: [id])
   variations        ProductVariation[]
 }
 
@@ -55,9 +86,11 @@ model Category {
   name      String    @db.VarChar(101)
   slug      String    @unique @db.VarChar(101)
   imageUrl  String    @db.VarChar(101)
+  storeId   String    // Relacionamento com a loja
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  store     Store     @relation(fields: [storeId], references: [id])
   products  Product[]
 }
 
@@ -70,18 +103,23 @@ model Banner {
   primaryButtonLink  String   @db.VarChar(101)
   secondaryButtonText String  @db.VarChar(101)
   secondaryButtonLink String  @db.VarChar(101)
+  storeId            String   // Relacionamento com a loja
   isActive           Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+
+  store              Store    @relation(fields: [storeId], references: [id])
 }
 
 model Order {
   id        String   @id @default(cuid())
   userId    String
+  storeId   String   // Relacionamento com a loja onde a compra foi feita
   status    String   @default("pending") @db.VarChar(101)
   total     Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user      User     @relation(fields: [userId], references: [id])
+  // Relacionamento implícito com a loja, não precisamos defini-lo aqui
 }

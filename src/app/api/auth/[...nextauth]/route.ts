@@ -13,27 +13,59 @@ export const authOptions: AuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        userType: { label: "UserType", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email e senha são obrigatórios")
         }
 
-        // Verificar se é o usuário admin
+        const userType = credentials.userType || "customer"
+
         if (credentials.email === "admin@jondev.com") {
           if (credentials.password === "mariacecilia456!") {
             return {
               id: "admin",
               email: "admin@jondev.com",
               name: "Administrador",
-              role: "admin",
+              role: "superadmin",
+              userType: "superadmin",
             }
           } else {
             throw new Error("Email ou senha inválidos")
           }
         }
 
-        // Para usuários normais, verificar no banco de dados
+        if (userType === "storeAdmin") {
+          const storeAdmin = await db.storeAdmin.findUnique({
+            where: {
+              email: credentials.email,
+            },
+            include: {
+              store: true,
+            },
+          })
+
+          if (!storeAdmin || !storeAdmin.password) {
+            throw new Error("Email ou senha inválidos")
+          }
+
+          const isCorrectPassword = await compare(credentials.password, storeAdmin.password)
+
+          if (!isCorrectPassword) {
+            throw new Error("Email ou senha inválidos")
+          }
+
+          return {
+            id: storeAdmin.id,
+            email: storeAdmin.email,
+            name: storeAdmin.name,
+            role: "storeAdmin",
+            userType: "storeAdmin",
+            storeId: storeAdmin.store?.id,
+          }
+        }
+
         const user = await db.user.findUnique({
           where: {
             email: credentials.email,
@@ -54,7 +86,8 @@ export const authOptions: AuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: "user",
+          role: user.role,
+          userType: "customer",
         }
       },
     }),
@@ -66,13 +99,21 @@ export const authOptions: AuthOptions = {
   callbacks: {
     jwt: async ({ token, user }) => {
       if (user) {
-        token.role = user.role
+        token.role = user.role as string
+        token.userType = user.userType as string
+        if (user.storeId) {
+          token.storeId = user.storeId as string
+        }
       }
       return token
     },
     session: async ({ session, token }) => {
       if (token && session.user) {
         session.user.role = token.role as string
+        session.user.userType = token.userType as string
+        if (token.storeId) {
+          session.user.storeId = token.storeId as string
+        }
       }
       return session
     },
@@ -80,6 +121,7 @@ export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
+    error: "/login",
   },
 }
 

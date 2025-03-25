@@ -7,9 +7,16 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
 
-    // Verificar se o usuário está autenticado e é um administrador
-    if (!session || session.user?.email !== "admin@jondev.com") {
+    // Verificar se o usuário está autenticado e é um administrador de loja
+    if (!session || !session.user || (session.user.role !== "storeAdmin" && session.user.role !== "superadmin")) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    }
+
+    // Obter o storeId do usuário autenticado (exceto para superadmin)
+    const storeId = session.user.role === "superadmin" ? null : session.user.storeId
+
+    if (session.user.role === "storeAdmin" && !storeId) {
+      return NextResponse.json({ error: "Loja não encontrada" }, { status: 400 })
     }
 
     const body = await req.json()
@@ -20,13 +27,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Dados incompletos" }, { status: 400 })
     }
 
-    // Verificar se o slug já existe
-    const existingProduct = await db.product.findUnique({
-      where: { slug },
+    // Verificar se o slug já existe (na mesma loja)
+    const existingProduct = await db.product.findFirst({
+      where: { 
+        slug,
+        ...(storeId ? { storeId } : {})
+      },
     })
 
     if (existingProduct) {
       return NextResponse.json({ error: "Slug já está em uso" }, { status: 400 })
+    }
+
+    // Verificar se a categoria pertence à loja do usuário
+    if (storeId) {
+      const category = await db.category.findFirst({
+        where: {
+          id: categoryId,
+          storeId
+        }
+      })
+
+      if (!category) {
+        return NextResponse.json({ error: "Categoria não encontrada ou não pertence à sua loja" }, { status: 400 })
+      }
     }
 
     // Criar produto
@@ -39,6 +63,7 @@ export async function POST(req: Request) {
         discountPercentage,
         imageUrl,
         categoryId,
+        storeId: storeId || "superadmin-store", // Para o superadmin, usar um ID padrão
         stock: stock || 0,
         isNew: isNew || false,
         isFeatured: isFeatured || false,
@@ -62,20 +87,27 @@ export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions)
 
-    // Verificar se o usuário está autenticado e é um administrador
-    if (!session || session.user?.email !== "admin@jondev.com") {
+    // Verificar se o usuário está autenticado e é um administrador de loja
+    if (!session || !session.user || (session.user.role !== "storeAdmin" && session.user.role !== "superadmin")) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
+
+    // Obter o storeId do usuário autenticado (exceto para superadmin)
+    const storeId = session.user.role === "superadmin" ? null : session.user.storeId
 
     const { searchParams } = new URL(req.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
     const limit = Number.parseInt(searchParams.get("limit") || "10")
     const skip = (page - 1) * limit
 
+    // Filtro adicional para storeId (se não for superadmin)
+    const storeFilter = storeId ? { storeId } : {}
+
     // Buscar produtos com paginação
     const products = await db.product.findMany({
       skip,
       take: limit,
+      where: storeFilter,
       orderBy: { createdAt: "desc" },
       include: {
         category: {
@@ -86,8 +118,10 @@ export async function GET(req: Request) {
       },
     })
 
-    // Contar total de produtos
-    const total = await db.product.count()
+    // Contar total de produtos (da loja específica, se aplicável)
+    const total = await db.product.count({
+      where: storeFilter
+    })
 
     return NextResponse.json({
       products,

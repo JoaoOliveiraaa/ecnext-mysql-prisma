@@ -1,3 +1,6 @@
+import { Metadata } from "next"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Users, ShoppingCart, Package, DollarSign, TrendingUp, TrendingDown } from "lucide-react"
@@ -7,8 +10,17 @@ import RecentOrdersTable from "@/components/admin/recent-orders-table"
 import TopProductsTable from "@/components/admin/top-products-table"
 import MigrationGuide from "@/components/migration-guide"
 import SetupGuide from "@/components/setup-guide"
+import MigrateDbButton from "@/components/admin/migrate-db-button"
+
+export const metadata: Metadata = {
+  title: "Admin Dashboard | MINISHOP",
+  description: "Painel administrativo da loja MINISHOP",
+}
 
 export default async function AdminDashboardPage() {
+  const session = await getServerSession(authOptions)
+  const isSuperAdmin = session?.user?.role === "superadmin"
+
   // Adicionando tratamento de erro para as funções
   let stats = {
     totalSales: 0,
@@ -44,6 +56,15 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        {isSuperAdmin && process.env.NODE_ENV !== "production" && (
+          <div className="flex justify-end">
+            <MigrateDbButton />
+          </div>
+        )}
+      </div>
+
       <div className="space-y-4">
         <MigrationGuide />
         <SetupGuide />
