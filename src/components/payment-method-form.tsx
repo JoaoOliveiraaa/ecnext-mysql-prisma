@@ -2,7 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { PlusCircle, Trash2, Check, CreditCard } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Cookies from 'js-cookie'
 
 interface PaymentMethod {
   id: string
@@ -21,22 +24,18 @@ interface PaymentMethod {
   cardType: string
 }
 
-// Cartão de exemplo para demonstração
-const samplePaymentMethods: PaymentMethod[] = [
-  {
-    id: "1",
-    cardNumber: "•••• •••• •••• 4242",
-    cardHolder: "João Silva",
-    expiryMonth: "12",
-    expiryYear: "2025",
-    isDefault: true,
-    cardType: "visa",
-  },
-]
+// Inicializa com um array vazio
+const initialPaymentMethods: PaymentMethod[] = []
 
 export default function PaymentMethodForm() {
+  const params = useParams()
+  const { data: session } = useSession()
+  const userId = session?.user?.id || 'anonymous'
+  const storeSlug = params?.slug as string || 'default'
+  const cookieKey = `user-payment-methods-${storeSlug}-${userId}`
+  
   const { toast } = useToast()
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(samplePaymentMethods)
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(initialPaymentMethods)
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [newPaymentMethod, setNewPaymentMethod] = useState<Omit<PaymentMethod, "id" | "cardType">>({
@@ -46,6 +45,37 @@ export default function PaymentMethodForm() {
     expiryYear: "",
     isDefault: false,
   })
+
+  // Carregar métodos de pagamento do cookie quando o componente monta
+  useEffect(() => {
+    try {
+      console.log('Tentando carregar métodos de pagamento com slug:', storeSlug, 'e userId:', userId)
+      const savedPaymentMethods = Cookies.get(cookieKey)
+      if (savedPaymentMethods) {
+        console.log('Métodos de pagamento encontrados:', savedPaymentMethods)
+        setPaymentMethods(JSON.parse(savedPaymentMethods))
+      } else {
+        console.log('Nenhum método de pagamento encontrado para:', cookieKey)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar métodos de pagamento:', error)
+    }
+  }, [cookieKey, userId])
+
+  // Salvar métodos de pagamento no cookie sempre que forem atualizados
+  useEffect(() => {
+    try {
+      console.log('Salvando métodos de pagamento com slug:', storeSlug, 'e userId:', userId)
+      if (paymentMethods.length > 0) {
+        console.log('Dados a serem salvos:', JSON.stringify(paymentMethods))
+        Cookies.set(cookieKey, JSON.stringify(paymentMethods), { expires: 365 })
+      } else {
+        console.log('Sem métodos de pagamento para salvar')
+      }
+    } catch (error) {
+      console.error('Erro ao salvar métodos de pagamento:', error)
+    }
+  }, [paymentMethods, cookieKey, userId])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -89,11 +119,8 @@ export default function PaymentMethodForm() {
     setIsLoading(true)
 
     try {
-      // Aqui você implementaria a chamada à API para adicionar o método de pagamento
-      // const response = await fetch("/api/account/payment-methods", {...})
-
       // Simulando uma adição bem-sucedida
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 500))
 
       const newId = Math.random().toString(36).substring(2, 9)
 
@@ -143,11 +170,8 @@ export default function PaymentMethodForm() {
     setIsLoading(true)
 
     try {
-      // Aqui você implementaria a chamada à API para remover o método de pagamento
-      // const response = await fetch(`/api/account/payment-methods/${id}`, { method: 'DELETE' })
-
       // Simulando uma remoção bem-sucedida
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 300))
 
       const updatedPaymentMethods = paymentMethods.filter((method) => method.id !== id)
       setPaymentMethods(updatedPaymentMethods)
@@ -171,11 +195,8 @@ export default function PaymentMethodForm() {
     setIsLoading(true)
 
     try {
-      // Aqui você implementaria a chamada à API para definir o método de pagamento padrão
-      // const response = await fetch(`/api/account/payment-methods/${id}/default`, { method: 'PUT' })
-
       // Simulando uma atualização bem-sucedida
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 300))
 
       const updatedPaymentMethods = paymentMethods.map((method) => ({
         ...method,

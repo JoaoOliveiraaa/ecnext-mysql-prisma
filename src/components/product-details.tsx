@@ -45,9 +45,10 @@ interface Product {
 interface ProductDetailsProps {
   product: Product
   relatedProducts: Product[]
+  storeSlug?: string
 }
 
-export default function ProductDetails({ product, relatedProducts }: ProductDetailsProps) {
+export default function ProductDetails({ product, relatedProducts, storeSlug }: ProductDetailsProps) {
   const { addItem } = useCart()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
   const { toast } = useToast()
@@ -181,7 +182,7 @@ export default function ProductDetails({ product, relatedProducts }: ProductDeta
     <div className="space-y-8">
       <div className="flex items-center mb-4">
         <Button variant="ghost" size="sm" asChild className="mr-2">
-          <Link href="/shop">
+          <Link href={storeSlug ? `/store/${storeSlug}/shop` : "/shop"}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Link>
@@ -190,14 +191,14 @@ export default function ProductDetails({ product, relatedProducts }: ProductDeta
           <nav className="flex" aria-label="Breadcrumb">
             <ol className="inline-flex items-center space-x-1 md:space-x-3">
               <li className="inline-flex items-center">
-                <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+                <Link href={storeSlug ? `/store/${storeSlug}` : "/"} className="text-sm text-muted-foreground hover:text-foreground">
                   Home
                 </Link>
               </li>
               <li>
                 <div className="flex items-center">
                   <span className="mx-2 text-muted-foreground">/</span>
-                  <Link href="/shop" className="text-sm text-muted-foreground hover:text-foreground">
+                  <Link href={storeSlug ? `/store/${storeSlug}/shop` : "/shop"} className="text-sm text-muted-foreground hover:text-foreground">
                     Shop
                   </Link>
                 </div>
@@ -207,7 +208,9 @@ export default function ProductDetails({ product, relatedProducts }: ProductDeta
                   <div className="flex items-center">
                     <span className="mx-2 text-muted-foreground">/</span>
                     <Link
-                      href={`/categories/${product.category.slug || product.category.id}`}
+                      href={storeSlug 
+                        ? `/store/${storeSlug}/categories/${product.category.slug || product.category.id}` 
+                        : `/categories/${product.category.slug || product.category.id}`}
                       className="text-sm text-muted-foreground hover:text-foreground"
                     >
                       {product.category.name}
@@ -363,6 +366,46 @@ export default function ProductDetails({ product, relatedProducts }: ProductDeta
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 {product.stock > 0 ? "Adicionar ao Carrinho" : "Produto Indisponível"}
               </Button>
+              
+              {/* Botão Comprar Agora */}
+              <Button 
+                variant="secondary" 
+                className="flex-1"
+                disabled={product.stock <= 0}
+                onClick={() => {
+                  // Adicionar ao carrinho e ir direto para checkout
+                  // Verificar se todas as variações necessárias foram selecionadas
+                  const allVariationsSelected = Object.keys(variationsByType).every((type) => selectedVariations[type])
+
+                  if (Object.keys(variationsByType).length > 0 && !allVariationsSelected) {
+                    toast({
+                      title: "Selecione todas as opções",
+                      description: "Por favor, selecione todas as opções disponíveis antes de comprar.",
+                      variant: "destructive",
+                    })
+                    return
+                  }
+
+                  // Criar um objeto de produto com as variações selecionadas
+                  const productToAdd = {
+                    ...product,
+                    selectedVariations,
+                    price: finalPrice, // Usar o preço da variação se selecionada
+                  }
+
+                  // Adicionar ao carrinho
+                  addItem(productToAdd, quantity)
+                  
+                  // Redirecionar para o checkout após adicionar ao carrinho
+                  if (storeSlug) {
+                    window.location.href = `/store/${storeSlug}/checkout`;
+                  } else {
+                    window.location.href = '/checkout';
+                  }
+                }}
+              >
+                Comprar Agora
+              </Button>
             </div>
 
             <div className="flex space-x-2">
@@ -389,7 +432,9 @@ export default function ProductDetails({ product, relatedProducts }: ProductDeta
               <div className="flex items-center space-x-2 mt-1">
                 <span className="text-sm font-medium">Categoria:</span>
                 <Link
-                  href={`/categories/${product.category.slug || product.category.id}`}
+                  href={storeSlug 
+                    ? `/store/${storeSlug}/categories/${product.category.slug || product.category.id}` 
+                    : `/categories/${product.category.slug || product.category.id}`}
                   className="text-sm hover:underline"
                 >
                   {product.category.name}
@@ -456,7 +501,11 @@ export default function ProductDetails({ product, relatedProducts }: ProductDeta
           <h2 className="text-2xl font-bold mb-6">Produtos Relacionados</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {relatedProducts.map((relatedProduct) => (
-              <ProductCard key={relatedProduct.id} product={relatedProduct} />
+              <ProductCard 
+                key={relatedProduct.id} 
+                product={relatedProduct} 
+                storeSlug={storeSlug}
+              />
             ))}
           </div>
         </div>

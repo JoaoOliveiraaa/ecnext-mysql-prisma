@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
-import { Menu, Bell, User, LogOut, Settings, Store } from "lucide-react"
+import { Menu, Bell, User, LogOut, Settings, Store, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -16,10 +16,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import AdminSidebarMobile from "@/components/admin/admin-sidebar-mobile"
+import { useToast } from "@/hooks/use-toast"
 
 export default function AdminHeader() {
   const { data: session } = useSession()
   const pathname = usePathname()
+  const router = useRouter()
+  const { toast } = useToast()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [storeSlug, setStoreSlug] = useState<string | null>(null)
 
@@ -77,6 +80,40 @@ export default function AdminHeader() {
   // Determinar o link da loja
   const storeLink = storeSlug ? `/store/${storeSlug}` : "/"
 
+  // Função para abrir a loja em uma nova aba sem compartilhar a sessão do admin
+  const handleVisitStoreAsGuest = async () => {
+    if (storeSlug) {
+      try {
+        // Chamar nossa API para definir o cookie e configurar a loja para ser visitada como convidado
+        const response = await fetch(`/api/visit-as-guest?slug=${storeSlug}`)
+        const data = await response.json()
+        
+        if (data.success) {
+          // Abrir uma nova aba com a URL da loja
+          window.open(`/store/${storeSlug}?guest=true`, '_blank')
+          
+          toast({
+            title: "Loja aberta como visitante",
+            description: "A loja foi aberta em uma nova aba como cliente anônimo",
+          })
+        } else {
+          toast({
+            title: "Erro",
+            description: "Não foi possível abrir a loja como visitante",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error("Erro ao configurar visita como convidado:", error)
+        toast({
+          title: "Erro",
+          description: "Ocorreu um erro ao tentar abrir a loja como visitante",
+          variant: "destructive",
+        })
+      }
+    }
+  }
+
   return (
     <header className="bg-white border-b">
       <div className="px-4 sm:px-6 lg:px-8">
@@ -98,12 +135,26 @@ export default function AdminHeader() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" asChild className="flex items-center">
-              <Link href={storeLink} target="_blank">
-                <Store className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline-block">Visitar loja</span>
-              </Link>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex items-center">
+                  <Store className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline-block">Visitar loja</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={storeLink} className="cursor-pointer">
+                    <Store className="mr-2 h-4 w-4" />
+                    <span>Visitar como admin</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleVisitStoreAsGuest} className="cursor-pointer">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  <span>Visitar como cliente</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Button variant="ghost" size="icon">
               <Bell className="h-5 w-5" />

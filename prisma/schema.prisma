@@ -113,16 +113,42 @@ model Banner {
 }
 
 model Order {
-  id        String   @id @default(cuid())
-  userId    String
-  storeId   String // Relacionamento com a loja onde a compra foi feita
-  status    String   @default("pending") @db.VarChar(101)
-  total     Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  userId          String
+  storeId         String // Relacionamento com a loja onde a compra foi feita
+  status          String   @default("pending") @db.VarChar(101)
+  total           Float
+  // Informações de entrega
+  shippingName    String   @db.VarChar(101)
+  shippingEmail   String   @db.VarChar(101)
+  shippingPhone   String?  @db.VarChar(30)
+  shippingAddress String   @db.VarChar(200)
+  shippingCity    String   @db.VarChar(101)
+  shippingState   String   @db.VarChar(101)
+  shippingZipCode String   @db.VarChar(20)
+  // Informações de pagamento
+  paymentMethod   String   @default("stripe") @db.VarChar(101)
+  paymentStatus   String   @default("pending") @db.VarChar(101)
+  paymentIntentId String?  @db.VarChar(101)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
-  // Relacionamento implícito com a loja, não precisamos defini-lo aqui
+  user  User         @relation(fields: [userId], references: [id])
+  items OrderItem[]
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  name      String @db.VarChar(101)
+  price     Float
+  quantity  Int
+  imageUrl  String @db.VarChar(101)
+  // Variações do produto
+  variations Json?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 // Configurações da loja

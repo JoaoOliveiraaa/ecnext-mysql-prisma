@@ -2,13 +2,16 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { PlusCircle, Trash2, Check } from "lucide-react"
+import Cookies from 'js-cookie'
 
 interface Address {
   id: string
@@ -23,25 +26,18 @@ interface Address {
   isDefault: boolean
 }
 
-// Endereço de exemplo para demonstração
-const sampleAddresses: Address[] = [
-  {
-    id: "1",
-    name: "",
-    street: "Rua das Flores",
-    number: "123",
-    complement: "Apto 101",
-    neighborhood: "Centro",
-    city: "São Paulo",
-    state: "SP",
-    zipCode: "01001-000",
-    isDefault: true,
-  },
-]
+// Inicializa com um array vazio
+const initialAddresses: Address[] = []
 
 export default function AddressForm() {
+  const params = useParams()
+  const { data: session } = useSession()
+  const userId = session?.user?.id || 'anonymous'
+  const storeSlug = params?.slug as string || 'default'
+  const cookieKey = `user-addresses-${storeSlug}-${userId}`
+  
   const { toast } = useToast()
-  const [addresses, setAddresses] = useState<Address[]>(sampleAddresses)
+  const [addresses, setAddresses] = useState<Address[]>(initialAddresses)
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [newAddress, setNewAddress] = useState<Omit<Address, "id">>({
@@ -55,6 +51,37 @@ export default function AddressForm() {
     zipCode: "",
     isDefault: false,
   })
+
+  // Carregar endereços do cookie quando o componente monta
+  useEffect(() => {
+    try {
+      console.log('Tentando carregar endereços com slug:', storeSlug, 'e userId:', userId)
+      const savedAddresses = Cookies.get(cookieKey)
+      if (savedAddresses) {
+        console.log('Endereços encontrados:', savedAddresses)
+        setAddresses(JSON.parse(savedAddresses))
+      } else {
+        console.log('Nenhum endereço encontrado para:', cookieKey)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar endereços:', error)
+    }
+  }, [cookieKey, userId])
+
+  // Salvar endereços no cookie sempre que forem atualizados
+  useEffect(() => {
+    try {
+      console.log('Salvando endereços com slug:', storeSlug, 'e userId:', userId)
+      if (addresses.length > 0) {
+        console.log('Dados a serem salvos:', JSON.stringify(addresses))
+        Cookies.set(cookieKey, JSON.stringify(addresses), { expires: 365 })
+      } else {
+        console.log('Sem endereços para salvar')
+      }
+    } catch (error) {
+      console.error('Erro ao salvar endereços:', error)
+    }
+  }, [addresses, cookieKey, userId])
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -76,11 +103,8 @@ export default function AddressForm() {
     setIsLoading(true)
 
     try {
-      // Aqui você implementaria a chamada à API para adicionar o endereço
-      // const response = await fetch("/api/account/addresses", {...})
-
       // Simulando uma adição bem-sucedida
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 300))
 
       const newId = Math.random().toString(36).substring(2, 9)
 
@@ -132,11 +156,8 @@ export default function AddressForm() {
     setIsLoading(true)
 
     try {
-      // Aqui você implementaria a chamada à API para remover o endereço
-      // const response = await fetch(`/api/account/addresses/${id}`, { method: 'DELETE' })
-
       // Simulando uma remoção bem-sucedida
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 300))
 
       const updatedAddresses = addresses.filter((addr) => addr.id !== id)
       setAddresses(updatedAddresses)
@@ -160,11 +181,8 @@ export default function AddressForm() {
     setIsLoading(true)
 
     try {
-      // Aqui você implementaria a chamada à API para definir o endereço padrão
-      // const response = await fetch(`/api/account/addresses/${id}/default`, { method: 'PUT' })
-
       // Simulando uma atualização bem-sucedida
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 300))
 
       const updatedAddresses = addresses.map((addr) => ({
         ...addr,

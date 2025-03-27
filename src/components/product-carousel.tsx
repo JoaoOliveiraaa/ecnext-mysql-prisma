@@ -9,9 +9,10 @@ import type { Product } from "@/types"
 interface ProductCarouselProps {
   title: string
   products: Product[]
+  storeSlug?: string
 }
 
-export default function ProductCarousel({ title, products }: ProductCarouselProps) {
+export default function ProductCarousel({ title, products, storeSlug }: ProductCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const productsPerPage = 4
   const totalPages = Math.ceil(products.length / productsPerPage)
@@ -46,7 +47,7 @@ export default function ProductCarousel({ title, products }: ProductCarouselProp
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         {visibleProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard key={product.id} product={product} storeSlug={storeSlug} />
         ))}
       </div>
     </section>

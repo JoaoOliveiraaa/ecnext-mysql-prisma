@@ -17,6 +17,7 @@ export interface Product {
   createdAt?: Date
   updatedAt?: Date
   storeId?: string
+  selectedVariations?: Record<string, string>
 }
 
 export interface User {

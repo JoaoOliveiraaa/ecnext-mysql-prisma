@@ -47,7 +47,7 @@ export default async function ShopPage(props: ShopPageProps) {
               Mostrando {store.products.length} produto(s)
             </p>
           </div>
-          <ProductGrid products={store.products} />
+          <ProductGrid products={store.products} storeSlug={slug} />
         </div>
       </div>
     </div>

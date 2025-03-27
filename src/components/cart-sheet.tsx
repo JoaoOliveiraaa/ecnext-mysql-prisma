@@ -8,9 +8,17 @@ import Image from "next/image"
 import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
 import { TableCell } from "@/components/ui/table"
+import { usePathname } from "next/navigation"
 
 export default function CartSheet() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice } = useCart()
+  const pathname = usePathname()
+  
+  // Verificar se estamos em uma loja específica
+  const storePathMatch = pathname ? pathname.match(/\/store\/([^\/]+)/) : null
+  const storeSlug = storePathMatch ? storePathMatch[1] : null
+  
+  const checkoutUrl = storeSlug ? `/store/${storeSlug}/checkout` : `/checkout`
 
   return (
     <Sheet open={isOpen} onOpenChange={closeCart}>
@@ -55,7 +63,9 @@ export default function CartSheet() {
                           <div className="flex-1 space-y-1">
                             <h3 className="font-medium">
                               <Link
-                                href={`/product/${item.product.slug}`}
+                                href={storeSlug 
+                                  ? `/store/${storeSlug}/product/${item.product.slug}`
+                                  : `/product/${item.product.slug}`}
                                 onClick={closeCart}
                                 className="hover:underline"
                               >
@@ -142,7 +152,7 @@ export default function CartSheet() {
                   <span>{formatCurrency(totalPrice)}</span>
                 </div>
                 <Button className="w-full" size="lg" asChild>
-                  <Link href="/checkout">Finalizar Compra</Link>
+                  <Link href={checkoutUrl}>Finalizar Compra</Link>
                 </Button>
                 <Button variant="outline" className="w-full" onClick={closeCart}>
                   Continuar Comprando

@@ -5,6 +5,7 @@ import { getCategories, getBanners, getNewProducts, getStoreSettings } from "@/l
 import Banner from "@/components/banner"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import ProductCard from "@/components/product-card"
 
 interface StorePageProps {
   params: {
@@ -109,27 +110,7 @@ export default async function StorePage({ params }: StorePageProps) {
           <h2 className="text-2xl font-bold mb-6">Novidades</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {newProducts.map((product) => (
-              <Link 
-                key={product.id} 
-                href={`/store/${store.slug}/product/${product.slug}`}
-                className="group block"
-              >
-                <div className="aspect-square rounded-lg overflow-hidden bg-secondary mb-3">
-                  <img 
-                    src={product.imageUrl || "/placeholder-product.png"} 
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                  />
-                </div>
-                <h3 className="font-medium text-lg group-hover:text-primary transition">{product.name}</h3>
-                <p className="text-muted-foreground">{product.category?.name}</p>
-                <div className="mt-2 font-semibold">
-                  {new Intl.NumberFormat('pt-BR', { 
-                    style: 'currency', 
-                    currency: 'BRL' 
-                  }).format(product.price / 100)}
-                </div>
-              </Link>
+              <ProductCard key={product.id} product={product} storeSlug={store.slug} />
             ))}
           </div>
         </div>

@@ -154,44 +154,9 @@ export async function getAllCategories() {
 // Função para buscar pedidos do usuário
 export async function getOrders() {
   try {
-    // Verificar se o usuário está autenticado seria ideal aqui
-    // Por enquanto, retornaremos dados simulados
-    
-    const mockOrders = [
-      {
-        id: "ORD123456",
-        status: "Entregue",
-        createdAt: new Date("2023-05-15"),
-        total: 250.99,
-        items: [
-          { id: "1", name: "Camiseta Básica", price: 79.99, quantity: 2 },
-          { id: "2", name: "Calça Jeans", price: 159.90, quantity: 1 }
-        ]
-      },
-      {
-        id: "ORD789012",
-        status: "Em trânsito",
-        createdAt: new Date("2023-06-20"),
-        total: 349.97,
-        items: [
-          { id: "3", name: "Tênis Casual", price: 199.99, quantity: 1 },
-          { id: "4", name: "Meia Kit 3 pares", price: 49.99, quantity: 1 },
-          { id: "5", name: "Boné", price: 99.99, quantity: 1 }
-        ]
-      },
-      {
-        id: "ORD345678",
-        status: "Processando",
-        createdAt: new Date("2023-07-05"),
-        total: 129.90,
-        items: [
-          { id: "6", name: "Camiseta Estampada", price: 89.90, quantity: 1 },
-          { id: "7", name: "Chaveiro", price: 19.99, quantity: 2 }
-        ]
-      }
-    ];
-    
-    return mockOrders;
+    // Em uma implementação real, buscaríamos os pedidos do usuário no banco de dados
+    // Por enquanto, retornaremos um array vazio
+    return [];
     
     // Em produção, usaríamos algo como:
     /*
@@ -216,6 +181,37 @@ export async function getOrders() {
   } catch (error) {
     console.error("Falha ao buscar pedidos:", error);
     return [];
+  }
+}
+
+// Função para buscar um pedido específico pelo ID
+export async function getOrderById(orderId: string) {
+  try {
+    // Em uma implementação real, buscaríamos o pedido específico no banco de dados
+    // Por enquanto, retornaremos null
+    return null;
+    
+    // Em produção, usaríamos algo como:
+    /*
+    const order = await db.order.findUnique({
+      where: {
+        id: orderId,
+      },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+        address: true,
+      },
+    });
+    
+    return order;
+    */
+  } catch (error) {
+    console.error("Falha ao buscar detalhes do pedido:", error);
+    return null;
   }
 }
 
@@ -316,67 +312,50 @@ export async function getBanners(storeId: string) {
 // Obter configurações da loja
 export async function getStoreSettings(storeId: string) {
   try {
-    const settings = await db.storeSettings.findFirst({
-      where: {
-        storeId,
-      },
-    })
-
-    // Se não existirem configurações, retornar valores padrão
-    if (!settings) {
-      return {
-        primaryColor: "#0f766e",
-        secondaryColor: "#4f46e5",
-        accentColor: "#f97316",
-        logoUrl: "/placeholder.svg",
-        faviconUrl: "/favicon.ico",
-        footerText: "© 2023 MINISHOP. Todos os direitos reservados.",
-        showHeroSection: true,
-        showFeaturedProducts: true,
-        showNewArrivals: true,
-        showCategoriesSection: true,
-        heroTitle: "Bem-vindo à nossa loja",
-        heroDescription: "Encontre os melhores produtos com os melhores preços",
-        layoutType: "modern",
-        fontFamily: "Inter",
-        contactEmail: "contato@exemplo.com",
-        contactPhone: "(00) 00000-0000",
-        whatsappNumber: "",
-        address: "Rua Exemplo, 123 - Cidade - Estado",
-        physicalAddress: "Rua Exemplo, 123 - Cidade - Estado",
-        googleMapsUrl: "",
-        facebookUrl: "",
-        instagramUrl: "",
-        twitterUrl: "",
-        youtubeUrl: "",
-        socialFacebook: "",
-        socialInstagram: "",
-        socialTwitter: "",
-        socialYoutube: "",
-        aboutText: "Somos uma loja comprometida com a qualidade e satisfação dos nossos clientes.",
-        helpText: "Entre em contato conosco para obter ajuda com seus pedidos ou dúvidas sobre nossos produtos.",
-        privacyPolicyText: "Política de privacidade da loja.",
-        termsOfServiceText: "Termos de serviço da loja.",
-        enableWhatsappSupport: false,
-        enableNewsletterPopup: false,
-        enableReviews: true,
-      }
+    // Simulação de configurações de loja - em um sistema real, isso viria do banco de dados
+    // const settings = await db.storeSettings.findFirst({ ... })
+    
+    // Configurações padrão
+    const defaultSettings = {
+      primaryColor: "#0f766e",
+      secondaryColor: "#4f46e5",
+      accentColor: "#f97316",
+      logoUrl: "/placeholder.svg",
+      faviconUrl: "/favicon.ico",
+      footerText: "© 2023 MINISHOP. Todos os direitos reservados.",
+      showHeroSection: true,
+      showFeaturedProducts: true,
+      showNewArrivals: true,
+      showCategoriesSection: true,
+      heroTitle: "Bem-vindo à nossa loja",
+      heroDescription: "Encontre os melhores produtos com os melhores preços",
+      layoutType: "modern",
+      fontFamily: "Inter",
+      contactEmail: "contato@exemplo.com",
+      contactPhone: "(00) 00000-0000",
+      whatsappNumber: "",
+      address: "Rua Exemplo, 123 - Cidade - Estado",
+      physicalAddress: "Rua Exemplo, 123 - Cidade - Estado",
+      googleMapsUrl: "",
+      facebookUrl: "",
+      instagramUrl: "",
+      twitterUrl: "",
+      youtubeUrl: "",
+      socialFacebook: "",
+      socialInstagram: "",
+      socialTwitter: "",
+      socialYoutube: "",
+      aboutText: "Somos uma loja comprometida com a qualidade e satisfação dos nossos clientes.",
+      helpText: "Entre em contato conosco para obter ajuda com seus pedidos ou dúvidas sobre nossos produtos.",
+      privacyPolicyText: "Política de privacidade da loja.",
+      termsOfServiceText: "Termos de serviço da loja.",
+      enableWhatsappSupport: false,
+      enableNewsletterPopup: false,
+      enableReviews: true,
     }
-
-    return {
-      ...settings,
-      // Garantir valores padrão para campos de texto que podem ser nulos
-      aboutText: settings.aboutText || "Somos uma loja comprometida com a qualidade e satisfação dos nossos clientes.",
-      helpText: settings.helpText || "Entre em contato conosco para obter ajuda com seus pedidos ou dúvidas sobre nossos produtos.",
-      privacyPolicyText: settings.privacyPolicyText || "Política de privacidade da loja.",
-      termsOfServiceText: settings.termsOfServiceText || "Termos de serviço da loja.",
-      // Campos adicionais compatíveis com o que está sendo usado na aplicação
-      physicalAddress: settings.address || "Rua Exemplo, 123 - Cidade - Estado",
-      socialFacebook: settings.facebookUrl || "",
-      socialInstagram: settings.instagramUrl || "",
-      socialTwitter: settings.twitterUrl || "",
-      socialYoutube: settings.youtubeUrl || "",
-    }
+    
+    // Em um sistema real, você buscaria no banco de dados e mesclaria com os valores padrão
+    return defaultSettings;
   } catch (error) {
     console.error("Erro ao buscar configurações da loja:", error)
     return null

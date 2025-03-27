@@ -15,9 +15,10 @@ import { cn } from "@/lib/utils"
 
 interface ProductCardProps {
   product: Product
+  storeSlug?: string
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, storeSlug }: ProductCardProps) {
   const { addItem } = useCart()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
   const { toast } = useToast()
@@ -54,8 +55,13 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
   }
 
+  // Construir a URL do produto com base na presença do storeSlug
+  const productUrl = storeSlug 
+    ? `/store/${storeSlug}/product/${product.slug}` 
+    : `/product/${product.slug}`
+
   return (
-    <Link href={`/product/${product.slug}`} className="group block">
+    <Link href={productUrl} className="group block">
       <div className="relative aspect-square overflow-hidden rounded-md">
         <Image
           src={product.imageUrl || "/placeholder.svg?height=300&width=300"}
@@ -93,11 +99,26 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center gap-2 mt-1">
           {product.discountPercentage > 0 ? (
             <>
-              <span className="font-medium">${product.price - (product.price * product.discountPercentage) / 100}</span>
-              <span className="text-sm text-muted-foreground line-through">${product.price}</span>
+              <span className="font-medium">
+                {new Intl.NumberFormat('pt-BR', { 
+                  style: 'currency', 
+                  currency: 'BRL' 
+                }).format(product.price - (product.price * product.discountPercentage) / 100)}
+              </span>
+              <span className="text-sm text-muted-foreground line-through">
+                {new Intl.NumberFormat('pt-BR', { 
+                  style: 'currency', 
+                  currency: 'BRL' 
+                }).format(product.price)}
+              </span>
             </>
           ) : (
-            <span className="font-medium">${product.price}</span>
+            <span className="font-medium">
+              {new Intl.NumberFormat('pt-BR', { 
+                style: 'currency', 
+                currency: 'BRL' 
+              }).format(product.price)}
+            </span>
           )}
         </div>
       </div>
