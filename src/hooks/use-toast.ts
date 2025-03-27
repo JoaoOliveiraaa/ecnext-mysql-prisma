@@ -3,7 +3,7 @@
 // Implementação simples do hook useToast
 import { useState } from "react"
 
-type ToastVariant = "default" | "destructive"
+type ToastVariant = "default" | "destructive" | "warning"
 
 interface Toast {
   id: string

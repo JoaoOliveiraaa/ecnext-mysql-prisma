@@ -8,7 +8,7 @@ interface ToastProps {
   id: string
   title: string
   description?: string
-  variant?: "default" | "destructive"
+  variant?: "default" | "destructive" | "warning"
   onDismiss: (id: string) => void
 }
 
@@ -27,7 +27,11 @@ export function Toast({ id, title, description, variant = "default", onDismiss }
     <div
       className={cn(
         "fixed bottom-4 right-4 z-50 max-w-md rounded-lg border p-4 shadow-lg transition-all duration-300 ease-in-out",
-        variant === "destructive" ? "border-red-200 bg-red-50 text-red-900" : "border-gray-200 bg-white text-gray-900",
+        variant === "destructive" 
+          ? "border-red-200 bg-red-50 text-red-900" 
+          : variant === "warning"
+            ? "border-yellow-200 bg-yellow-50 text-yellow-900" 
+            : "border-gray-200 bg-white text-gray-900",
         isVisible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
       )}
     >

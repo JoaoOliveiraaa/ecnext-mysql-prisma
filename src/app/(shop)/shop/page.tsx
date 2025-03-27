@@ -13,8 +13,8 @@ export default async function ShopPage() {
   const categories = await getCategories()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Produtos</h1>
+    <div className="container mx-auto max-w-7xl px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Todos os Produtos</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="md:col-span-1">
@@ -22,6 +22,11 @@ export default async function ShopPage() {
         </div>
 
         <div className="md:col-span-3">
+          <div className="mb-4 p-4 bg-muted rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              Mostrando {products.length} produto(s)
+            </p>
+          </div>
           <ProductGrid products={products} />
         </div>
       </div>

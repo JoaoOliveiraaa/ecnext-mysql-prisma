@@ -1,24 +1,34 @@
 import Link from "next/link"
 import Image from "next/image"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus } from "lucide-react"
 import AdminPagination from "@/components/admin/admin-pagination"
+import DeleteCategoryButton from "@/components/admin/delete-category-button"
 import { db } from "@/lib/db"
+import { Category } from "@prisma/client"
 
 export const dynamic = "force-dynamic"
+
+interface CategoryWithCount extends Category {
+  _count: {
+    products: number;
+  };
+}
 
 export default async function CategoriesPage({
   searchParams,
 }: {
   searchParams: { page?: string }
 }) {
-  const page = searchParams?.page ? Number.parseInt(searchParams.page) : 1
+  // Aguarde os parâmetros searchParams antes de usá-los
+  const resolvedSearchParams = await Promise.resolve(searchParams);
+  const page = resolvedSearchParams?.page ? Number.parseInt(resolvedSearchParams.page) : 1
   const limit = 10
   const skip = (page - 1) * limit
 
   // Buscar categorias do banco de dados
-  let categories = []
+  let categories: CategoryWithCount[] = []
   let totalCategories = 0
 
   try {
@@ -68,7 +78,7 @@ export default async function CategoriesPage({
           </TableHeader>
           <TableBody>
             {categories.length > 0 ? (
-              categories.map((category: any) => (
+              categories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -86,9 +96,16 @@ export default async function CategoriesPage({
                   <TableCell>{category.slug}</TableCell>
                   <TableCell>{category._count.products}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/admin/categories/edit/${category.id}`}>Editar</Link>
-                    </Button>
+                    <div className="flex justify-end items-center gap-2">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/categories/edit/${category.id}`}>Editar</Link>
+                      </Button>
+                      <DeleteCategoryButton 
+                        categoryId={category.id} 
+                        categoryName={category.name} 
+                        productCount={category._count.products} 
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -102,7 +119,7 @@ export default async function CategoriesPage({
           </TableBody>
         </Table>
       </div>
-
+      
       <AdminPagination currentPage={page} totalPages={totalPages} />
     </div>
   )

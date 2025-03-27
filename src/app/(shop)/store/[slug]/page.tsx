@@ -1,7 +1,10 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
+import { Metadata } from "next"
 import { db } from "@/lib/db"
-import ProductGrid from "@/components/product-grid"
-import ShopFilters from "@/components/shop-filters"
+import { getCategories, getBanners, getNewProducts, getStoreSettings } from "@/lib/data"
+import Banner from "@/components/banner"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 interface StorePageProps {
   params: {
@@ -9,65 +12,128 @@ interface StorePageProps {
   }
 }
 
-export default async function StorePage({ params }: StorePageProps) {
-  // Aguardar os parâmetros completos antes de desestruturar
-  const slug = await params.slug
-
-  // Buscar a loja pelo slug
+export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
+  const resolvedParams = await Promise.resolve(params)
   const store = await db.store.findUnique({
-    where: { slug },
-    include: {
-      products: {
-        include: {
-          category: true
-        }
-      },
-      categories: true
-    }
+    where: { slug: resolvedParams.slug },
   })
 
-  // Se a loja não existir, retornar 404
+  if (!store) {
+    return {
+      title: "Loja não encontrada",
+    }
+  }
+
+  return {
+    title: store.name,
+    description: `Bem-vindo à ${store.name}. Confira nossos produtos e ofertas.`,
+  }
+}
+
+export default async function StorePage({ params }: StorePageProps) {
+  const resolvedParams = await Promise.resolve(params)
+  const store = await db.store.findUnique({
+    where: { slug: resolvedParams.slug },
+  })
+
   if (!store) {
     notFound()
   }
 
-  return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{store.name}</h1>
-        <p className="text-muted-foreground">
-          Bem-vindo à loja {store.name}. Aqui você encontra os melhores produtos.
-        </p>
-      </div>
+  const categories = await getCategories(store.id)
+  const banners = await getBanners(store.id)
+  const newProducts = await getNewProducts(store.id)
+  const settings = await getStoreSettings(store.id)
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-1">
-          <ShopFilters 
-            categories={store.categories.map(category => ({
-              id: category.id,
-              name: category.name,
-              slug: category.slug
-            }))} 
+  return (
+    <main className="flex-1">
+      <div className="w-full max-w-7xl mx-auto">
+        {/* Banners */}
+        {banners.length > 0 ? (
+          <Banner 
+            data={{
+              id: banners[0].id,
+              title: banners[0].title,
+              description: banners[0].description,
+              imageUrl: banners[0].imageUrl,
+              primaryButtonText: banners[0].primaryButtonText,
+              primaryButtonLink: banners[0].primaryButtonLink,
+              secondaryButtonText: banners[0].secondaryButtonText,
+              secondaryButtonLink: banners[0].secondaryButtonLink,
+              isActive: banners[0].isActive,
+              createdAt: banners[0].createdAt,
+              updatedAt: banners[0].updatedAt
+            }}
           />
+        ) : (
+          <div className="w-full max-w-7xl mx-auto px-4 py-6">
+            <div className="relative w-full rounded-lg bg-muted overflow-hidden">
+              <div className="flex flex-col md:flex-row items-center">
+                <div className="p-8 md:p-12 space-y-4 md:w-1/2">
+                  <h1 className="text-3xl md:text-4xl font-bold">Bem-vindo à {store.name}</h1>
+                  <p className="text-muted-foreground">
+                    Aqui você encontra os melhores produtos com preços imbatíveis.
+                  </p>
+                  <div className="flex gap-4">
+                    <Button asChild variant="default">
+                      <Link href={`/store/${store.slug}/categories`}>Ver Categorias</Link>
+                    </Button>
+                    <Button asChild variant="outline">
+                      <Link href={`/store/${store.slug}/about`}>Sobre nós</Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Categorias */}
+        <div className="w-full max-w-7xl mx-auto px-4 py-10">
+          <h2 className="text-2xl font-bold mb-6">Categorias</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {categories.map((category) => (
+              <Link 
+                key={category.id} 
+                href={`/store/${store.slug}/category/${category.slug}`}
+                className="group block bg-card hover:bg-card/90 rounded-lg p-4 text-center transition"
+              >
+                <div className="font-medium group-hover:text-primary transition">{category.name}</div>
+              </Link>
+            ))}
+          </div>
         </div>
-        <div className="lg:col-span-3">
-          <ProductGrid 
-            products={store.products.map(product => ({
-              id: product.id,
-              name: product.name,
-              slug: product.slug,
-              price: product.price,
-              discountPercentage: product.discountPercentage,
-              imageUrl: product.imageUrl,
-              category: {
-                name: product.category.name
-              },
-              isFeatured: product.isFeatured,
-              isNew: product.isNew
-            }))}
-          />
+        
+        {/* Produtos Novos */}
+        <div className="w-full max-w-7xl mx-auto px-4 py-10 mb-8">
+          <h2 className="text-2xl font-bold mb-6">Novidades</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {newProducts.map((product) => (
+              <Link 
+                key={product.id} 
+                href={`/store/${store.slug}/product/${product.slug}`}
+                className="group block"
+              >
+                <div className="aspect-square rounded-lg overflow-hidden bg-secondary mb-3">
+                  <img 
+                    src={product.imageUrl || "/placeholder-product.png"} 
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  />
+                </div>
+                <h3 className="font-medium text-lg group-hover:text-primary transition">{product.name}</h3>
+                <p className="text-muted-foreground">{product.category?.name}</p>
+                <div className="mt-2 font-semibold">
+                  {new Intl.NumberFormat('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL' 
+                  }).format(product.price / 100)}
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   )
-} 
+}

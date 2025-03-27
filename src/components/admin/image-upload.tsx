@@ -37,6 +37,12 @@ export default function ImageUpload({
       setIsLoading(true)
       setImageError(false)
 
+      // Verificar o tamanho do arquivo (limite de 5MB)
+      const maxSize = 5 * 1024 * 1024 // 5MB
+      if (file.size > maxSize) {
+        throw new Error("O arquivo é muito grande. O tamanho máximo é 5MB.")
+      }
+
       // Criar FormData para enviar o arquivo
       const formData = new FormData()
       formData.append("file", file)
@@ -47,11 +53,21 @@ export default function ImageUpload({
         body: formData,
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        throw new Error("Erro ao fazer upload da imagem")
+        throw new Error(data.error || "Erro ao fazer upload da imagem")
       }
 
-      const data = await response.json()
+      if (data.fallback) {
+        console.warn("Upload usou fallback:", data.error)
+        toast({
+          title: "Upload com limitações",
+          description: "A imagem foi carregada, mas usando um placeholder devido a problemas técnicos.",
+          variant: "warning",
+        })
+      }
+
       onChange(data.url)
 
       toast({
@@ -60,12 +76,23 @@ export default function ImageUpload({
       })
     } catch (error) {
       console.error("Erro no upload:", error)
+      setImageError(true)
+      
+      // Exibir mensagem de erro específica
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Falha ao fazer upload da imagem.";
+        
       toast({
         title: "Erro",
-        description: "Falha ao fazer upload da imagem.",
+        description: errorMessage,
         variant: "destructive",
       })
-      setImageError(true)
+      
+      // Limpar o campo de arquivo
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
     } finally {
       setIsLoading(false)
     }
@@ -132,7 +159,7 @@ export default function ImageUpload({
               <>
                 <Upload className="h-10 w-10 text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">Clique para fazer upload</p>
-                <p className="text-xs text-muted-foreground mt-1">Formatos aceitos: JPG, PNG, GIF</p>
+                <p className="text-xs text-muted-foreground mt-1">Formatos aceitos: JPG, PNG, GIF (máx: 5MB)</p>
               </>
             )}
           </div>

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { Search, Heart, ShoppingCart } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { useCart } from "@/components/cart-provider"
 import { useWishlist } from "@/components/wishlist-provider"
@@ -18,21 +18,74 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const { totalItems: cartItems, openCart } = useCart()
   const { totalItems: wishlistItems, openWishlist } = useWishlist()
+  const [storeName, setStoreName] = useState("MINISHOP")
 
+  // Verificar se estamos em uma página de loja específica
+  const isStoreSpecificPage = pathname.includes("/store/") && pathname.split("/").length > 2
+  const storeSlug = isStoreSpecificPage ? pathname.split("/")[2] : null
+
+  // Obter o nome da loja se estiver em uma página de loja específica
+  useEffect(() => {
+    if (isStoreSpecificPage && storeSlug) {
+      fetch(`/api/stores/${storeSlug}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.name) {
+            setStoreName(data.name)
+          }
+        })
+        .catch(error => {
+          console.error("Erro ao buscar informações da loja:", error)
+        })
+    } else {
+      setStoreName("MINISHOP")
+    }
+  }, [isStoreSpecificPage, storeSlug])
+
+  // Ajustar os itens de navegação com base na página atual
   const navItems = [
-    { name: "Home", href: "/" },
-    { name: "Shop", href: "/shop" },
-    { name: "Categories", href: "/categories" },
-    { name: "About", href: "/about" },
+    { 
+      name: "Home", 
+      href: isStoreSpecificPage ? `/store/${storeSlug}` : "/" 
+    },
+    { 
+      name: "Shop", 
+      href: isStoreSpecificPage ? `/store/${storeSlug}/shop` : "/shop" 
+    },
+    { 
+      name: "Categories", 
+      href: isStoreSpecificPage ? `/store/${storeSlug}/categories` : "/categories" 
+    },
+    { 
+      name: "About", 
+      href: isStoreSpecificPage ? `/store/${storeSlug}/about` : "/about" 
+    },
   ]
+
+  // Função para verificar se um link está ativo
+  const isLinkActive = (href: string) => {
+    if (isStoreSpecificPage) {
+      // Para links de loja específica
+      if (href === `/store/${storeSlug}` && pathname === `/store/${storeSlug}`) {
+        return true;
+      }
+      return pathname.startsWith(href) && pathname !== `/store/${storeSlug}`;
+    } else {
+      // Para links gerais
+      if (href === "/" && pathname === "/") {
+        return true;
+      }
+      return pathname.startsWith(href) && href !== "/";
+    }
+  };
 
   return (
     <>
       <header className="w-full max-w-7xl border-b border-b-gray-100 items-center mx-auto">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-8">
-            <Link href="/" className="text-xl font-bold">
-              MINISHOP
+            <Link href={isStoreSpecificPage ? `/store/${storeSlug}` : "/"} className="text-xl font-bold">
+              {storeName}
             </Link>
 
             <nav className="hidden md:flex items-center space-x-6">
@@ -42,7 +95,7 @@ export default function Navbar() {
                   href={item.href}
                   className={cn(
                     "text-sm font-medium transition-colors hover:text-primary",
-                    pathname === item.href ? "text-primary" : "text-muted-foreground",
+                    isLinkActive(item.href) ? "text-primary font-bold" : "text-muted-foreground",
                   )}
                 >
                   {item.name}

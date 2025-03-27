@@ -17,7 +17,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders    Order[]
+  orders Order[]
 }
 
 // Modelo para administradores de lojas
@@ -29,97 +29,153 @@ model StoreAdmin {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  store     Store?   // Um admin pode gerenciar uma loja
+  store Store? // Um admin pode gerenciar uma loja
 }
 
 // Modelo para lojas
 model Store {
-  id          String   @id @default(cuid())
-  name        String   @db.VarChar(101)
-  slug        String   @unique @db.VarChar(101)
-  adminId     String   @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(101)
+  slug      String   @unique @db.VarChar(101)
+  adminId   String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  admin       StoreAdmin  @relation(fields: [adminId], references: [id])
-  products    Product[]
-  categories  Category[]
-  banners     Banner[]
+  admin      StoreAdmin     @relation(fields: [adminId], references: [id])
+  products   Product[]
+  categories Category[]
+  banners    Banner[]
+  settings   StoreSettings?
 }
 
 model Product {
-  id                String      @id @default(cuid())
-  name              String      @db.VarChar(101)
-  slug              String      @unique @db.VarChar(101)
-  description       String      @db.Text
-  price             Float
-  discountPercentage Float      @default(0)
-  imageUrl          String      @db.VarChar(101)
-  categoryId        String
-  storeId           String     // Relacionamento com a loja
-  isNew             Boolean     @default(false)
-  isFeatured        Boolean     @default(false)
-  stock             Int         @default(0)
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id                 String   @id @default(cuid())
+  name               String   @db.VarChar(101)
+  slug               String   @unique @db.VarChar(101)
+  description        String   @db.Text
+  price              Float
+  discountPercentage Float    @default(0)
+  imageUrl           String   @db.VarChar(101)
+  categoryId         String
+  storeId            String // Relacionamento com a loja
+  isNew              Boolean  @default(false)
+  isFeatured         Boolean  @default(false)
+  stock              Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  category          Category    @relation(fields: [categoryId], references: [id])
-  store             Store       @relation(fields: [storeId], references: [id])
-  variations        ProductVariation[]
+  category   Category           @relation(fields: [categoryId], references: [id])
+  store      Store              @relation(fields: [storeId], references: [id])
+  variations ProductVariation[]
 }
 
 model ProductVariation {
   id        String   @id @default(cuid())
   productId String
-  type      String   @db.VarChar(101)  // cor, tamanho, etc.
-  value     String   @db.VarChar(101)  // vermelho, P, etc.
-  price     Float    // preço específico para esta variação
+  type      String   @db.VarChar(101) // cor, tamanho, etc.
+  value     String   @db.VarChar(101) // vermelho, P, etc.
+  price     Float // preço específico para esta variação
   stock     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String    @db.VarChar(101)
-  slug      String    @unique @db.VarChar(101)
-  imageUrl  String    @db.VarChar(101)
-  storeId   String    // Relacionamento com a loja
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(101)
+  slug      String   @unique @db.VarChar(101)
+  imageUrl  String   @db.VarChar(101)
+  storeId   String // Relacionamento com a loja
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  store     Store     @relation(fields: [storeId], references: [id])
-  products  Product[]
+  store    Store     @relation(fields: [storeId], references: [id])
+  products Product[]
 }
 
 model Banner {
-  id                 String   @id @default(cuid())
-  title              String   @db.VarChar(101)
-  description        String   @db.VarChar(101)
-  imageUrl           String   @db.VarChar(101)
-  primaryButtonText  String   @db.VarChar(101)
-  primaryButtonLink  String   @db.VarChar(101)
-  secondaryButtonText String  @db.VarChar(101)
-  secondaryButtonLink String  @db.VarChar(101)
-  storeId            String   // Relacionamento com a loja
-  isActive           Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  title               String   @db.VarChar(101)
+  description         String   @db.VarChar(101)
+  imageUrl            String   @db.VarChar(101)
+  primaryButtonText   String   @db.VarChar(101)
+  primaryButtonLink   String   @db.VarChar(101)
+  secondaryButtonText String   @db.VarChar(101)
+  secondaryButtonLink String   @db.VarChar(101)
+  storeId             String // Relacionamento com a loja
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  store              Store    @relation(fields: [storeId], references: [id])
+  store Store @relation(fields: [storeId], references: [id])
 }
 
 model Order {
   id        String   @id @default(cuid())
   userId    String
-  storeId   String   // Relacionamento com a loja onde a compra foi feita
+  storeId   String // Relacionamento com a loja onde a compra foi feita
   status    String   @default("pending") @db.VarChar(101)
   total     Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
   // Relacionamento implícito com a loja, não precisamos defini-lo aqui
+}
+
+// Configurações da loja
+model StoreSettings {
+  id             String @id @default(cuid())
+  storeId        String @unique
+  // Cores e temas
+  primaryColor   String @default("#0f766e") // cor primária
+  secondaryColor String @default("#4f46e5") // cor secundária
+  accentColor    String @default("#f97316") // cor de destaque
+  fontFamily     String @default("Inter")
+
+  // Logos e branding
+  logoUrl    String @default("/placeholder.svg")
+  faviconUrl String @default("/favicon.ico")
+  footerText String @default("© 2023 MINISHOP. Todos os direitos reservados.")
+
+  // Seções da página inicial
+  showHeroSection       Boolean @default(true)
+  showFeaturedProducts  Boolean @default(true)
+  showNewArrivals       Boolean @default(true)
+  showCategoriesSection Boolean @default(true)
+  heroTitle             String  @default("Bem-vindo à nossa loja")
+  heroDescription       String  @default("Encontre os melhores produtos com os melhores preços")
+  layoutType            String  @default("modern")
+
+  // Informações de contato
+  contactEmail   String @default("contato@exemplo.com")
+  contactPhone   String @default("(00) 00000-0000")
+  whatsappNumber String @default("")
+  address        String @default("Rua Exemplo, 123 - Cidade - Estado")
+  googleMapsUrl  String @default("")
+
+  // Links de redes sociais
+  facebookUrl  String @default("")
+  instagramUrl String @default("")
+  twitterUrl   String @default("")
+  youtubeUrl   String @default("")
+
+  // Textos institucionais
+  aboutText          String? @db.Text
+  helpText           String? @db.Text
+  privacyPolicyText  String? @db.Text
+  termsOfServiceText String? @db.Text
+
+  // Outras configurações
+  enableWhatsappSupport Boolean @default(false)
+  enableNewsletterPopup Boolean @default(false)
+  enableReviews         Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id])
 }

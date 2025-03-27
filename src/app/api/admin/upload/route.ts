@@ -3,16 +3,17 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { v4 as uuidv4 } from "uuid"
 import { put } from "@vercel/blob"
-import { writeFile } from "fs/promises"
+import { writeFile, mkdir } from "fs/promises"
 import path from "path"
+import fs from "fs"
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
 
-    // Verificar se o usuário está autenticado e é um administrador
-    if (!session || session.user?.email !== "admin@jondev.com") {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    // Verificar se o usuário está autenticado
+    if (!session) {
+      return NextResponse.json({ error: "Não autorizado - Faça login para continuar" }, { status: 401 })
     }
 
     const formData = await req.formData()
@@ -47,6 +48,11 @@ export async function POST(req: Request) {
         // Fallback para salvar localmente
         // Criar diretório de uploads se não existir
         const uploadsDir = path.join(process.cwd(), "public/uploads")
+        
+        // Verificar se o diretório existe e criá-lo se não existir
+        if (!fs.existsSync(uploadsDir)) {
+          await mkdir(uploadsDir, { recursive: true })
+        }
 
         try {
           // Converter o arquivo para um buffer
@@ -66,7 +72,7 @@ export async function POST(req: Request) {
           })
         } catch (fsError) {
           console.error("ERRO_SALVAR_ARQUIVO_LOCAL", fsError)
-          throw new Error("Erro ao salvar arquivo localmente")
+          throw new Error(`Erro ao salvar arquivo localmente: ${fsError instanceof Error ? fsError.message : "Erro desconhecido"}`)
         }
       }
     } catch (uploadError) {

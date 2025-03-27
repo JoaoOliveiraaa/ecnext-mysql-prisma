@@ -18,7 +18,9 @@ export default async function AdminProductsPage({
 }: {
   searchParams: { page?: string }
 }) {
-  const page = searchParams?.page ? Number.parseInt(searchParams.page) : 1
+  // Aguarde os parâmetros searchParams antes de usá-los
+  const resolvedSearchParams = await Promise.resolve(searchParams);
+  const page = resolvedSearchParams?.page ? Number.parseInt(resolvedSearchParams.page) : 1
   const limit = 10
   const skip = (page - 1) * limit
 
